@@ -1,0 +1,6 @@
+{
+  "name": "tp-pds-grupo-4",
+  "workspaces": [
+    "packages/api-vuelos"
+  ]
+}
