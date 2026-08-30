@@ -1,0 +1,16 @@
+services:
+  ctv-backend:
+    build: ./packages/ctv-backend
+    image: ctv-backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  ctv-frontend:
+    build: ./packages/ctv-frontend
+    image: ctv-frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    depends_on:
+      - ctv-backend

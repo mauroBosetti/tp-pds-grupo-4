@@ -1,6 +1,8 @@
 {
   "name": "tp-pds-grupo-4",
   "workspaces": [
-    "packages/api-vuelos"
+    "packages/api-vuelos",
+    "packages/ctv-frontend",
+    "packages/ctv-backend"
   ]
 }
