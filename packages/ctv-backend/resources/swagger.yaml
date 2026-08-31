@@ -297,7 +297,7 @@ paths:
       responses:
         '201':
           description: Paquete guardado
-  /favoritos/{id_paquete}/resena:
+  /favoritos/{id_paquete}/reseña:
     post:
       tags:
         - Favoritos y Reseñas
