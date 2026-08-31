@@ -4,5 +4,9 @@
     "packages/api-vuelos",
     "packages/ctv-frontend",
     "packages/ctv-backend"
-  ]
+  ],
+  "dependencies": {
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
+  }
 }

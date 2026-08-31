@@ -1,0 +1,402 @@
+openapi: 3.0.0
+info:
+  title: API Compra Tu Viaje (CTV)
+  version: 1.0.0
+  description: >
+    Documentación de la API Rest para la aplicación web Compra Tu Viaje (CTV),
+    solicitada por la Cámara Argentina de Turismo. Incluye los endpoints del Backend
+    principal y los endpoints requeridos para la API externa de Vuelos.
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor de Desarrollo Local
+tags:
+  - name: Autenticación
+    description: Gestión de registro y login de usuarios
+  - name: API Vuelos (Externa)
+    description: API externa simulada para consulta y venta de vuelos
+  - name: Paquetes
+    description: ABM y consulta de paquetes turísticos
+  - name: Favoritos y Reseñas
+    description: Funcionalidades para Compradores (guardar interés, puntajes, comentarios)
+  - name: Compras
+    description: Registro y consulta de ventas de paquetes
+  - name: Agencias
+    description: ABM de Agencias (Uso exclusivo Administrador)
+  - name: Usuarios
+    description: ABM de Usuarios del sistema (Uso exclusivo Administrador)
+  - name: Reportes
+    description: Estadísticas y métricas del sistema
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Ingrese el token JWT (Requerido para endpoints protegidos según perfil).
+  schemas:
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+          enum: [COMPRADOR, AGENCIA, ADMINISTRADOR]
+    Vuelo:
+      type: object
+      properties:
+        id_vuelo:
+          type: integer
+        aerolinea:
+          type: string
+        fecha:
+          type: string
+          format: date
+        hora:
+          type: string
+          format: time
+        origen:
+          type: string
+        destino:
+          type: string
+        capacidad:
+          type: integer
+        disponibilidad:
+          type: integer
+    Hotel:
+      type: object
+      properties:
+        id_hotel:
+          type: integer
+        nombre:
+          type: string
+        destino:
+          type: string
+        foto:
+          type: string
+          format: uri
+        descripcion:
+          type: string
+    Paquete:
+      type: object
+      properties:
+        id_paquete:
+          type: integer
+        id_agencia:
+          type: integer
+        vuelo_ida:
+          $ref: '#/components/schemas/Vuelo'
+        vuelo_vuelta:
+          $ref: '#/components/schemas/Vuelo'
+        hotel:
+          $ref: '#/components/schemas/Hotel'
+        precio:
+          type: number
+          format: float
+        destino:
+          type: string
+    Compra:
+      type: object
+      properties:
+        id_paquete:
+          type: integer
+        id_comprador:
+          type: integer
+        fecha_compra:
+          type: string
+          format: date-time
+    VentaVuelo:
+      type: object
+      required:
+        - id_vuelo
+        - pasajero
+      properties:
+        id_vuelo:
+          type: integer
+        pasajero:
+          type: string
+    Reseña:
+      type: object
+      required:
+        - puntaje
+      properties:
+        puntaje:
+          type: integer
+          minimum: 0
+          maximum: 10
+        comentario:
+          type: string
+paths:
+  /auth/registro:
+    post:
+      tags:
+        - Autenticación
+      summary: Registrar un nuevo usuario (Comprador)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+  /auth/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login exitoso, retorna JWT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /vuelos:
+    get:
+      tags:
+        - API Vuelos (Externa)
+      summary: Consultar vuelos disponibles
+      description: Solo retorna vuelos con disponibilidad > 0.
+      parameters:
+        - name: origen
+          in: query
+          schema:
+            type: string
+        - name: destino
+          in: query
+          schema:
+            type: string
+        - name: fecha
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Lista de vuelos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vuelo'
+  /venta:
+    post:
+      tags:
+        - API Vuelos (Externa)
+      summary: Registrar venta de un vuelo
+      description: Aloca el pasajero a un vuelo y decrementa su disponibilidad.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VentaVuelo'
+      responses:
+        '200':
+          description: Venta de vuelo registrada exitosamente
+  /paquetes:
+    get:
+      tags:
+        - Paquetes
+      summary: Listar paquetes disponibles
+      description: Buscador avanzado con filtros. Las compras se realizan de a un paquete por vez.
+      parameters:
+        - name: palabra_clave
+          in: query
+          schema:
+            type: string
+        - name: destino
+          in: query
+          schema:
+            type: string
+        - name: precio_min
+          in: query
+          schema:
+            type: number
+        - name: precio_max
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Lista de paquetes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paquete'
+    post:
+      tags:
+        - Paquetes
+      summary: Crear un paquete (Perfil Agencia)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Paquete'
+      responses:
+        '201':
+          description: Paquete creado
+  /favoritos:
+    get:
+      tags:
+        - Favoritos y Reseñas
+      summary: Obtener paquetes guardados (Perfil Comprador o Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de paquetes favoritos
+    post:
+      tags:
+        - Favoritos y Reseñas
+      summary: Guardar un paquete como favorito (Perfil Comprador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_paquete:
+                  type: integer
+      responses:
+        '201':
+          description: Paquete guardado
+  /favoritos/{id_paquete}/resena:
+    post:
+      tags:
+        - Favoritos y Reseñas
+      summary: Agregar puntaje y comentario a un viaje de interés
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id_paquete
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reseña'
+      responses:
+        '201':
+          description: Reseña guardada
+  /compras:
+    get:
+      tags:
+        - Compras
+      summary: Consultar historial de compras / ventas
+      description: Permite a las Agencias ver sus ventas y a Administradores ver todas.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de compras realizadas con el precio fijado en el momento.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Compra'
+    post:
+      tags:
+        - Compras
+      summary: Comprar un paquete (Perfil Comprador)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_paquete:
+                  type: integer
+      responses:
+        '201':
+          description: Compra realizada exitosamente
+  /agencias:
+    get:
+      tags:
+        - Agencias
+      summary: Listar agencias (Perfil Administrador)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de agencias
+    post:
+      tags:
+        - Agencias
+      summary: Crear una agencia (Perfil Administrador)
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Agencia creada
+  /usuarios:
+    get:
+      tags:
+        - Usuarios
+      summary: Listar usuarios registrados (Perfil Administrador)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+  /reportes/{rol}:
+    get:
+      tags:
+        - Reportes
+      summary: Obtener reportes del sistema (Perfil Administrador)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rol
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [top-compradores, top-destinos-rankeados, top-agencias, top-destinos-vendidos]
+      responses:
+        '200':
+          description: Reporte solicitado (Top 5)
