@@ -13,5 +13,5 @@ model Agencia {
   codigoDeGrupo String? @map("codigo_de_grupo")
   // TODO: el MER pide codigo_de_grupo NOT NULL (char(6)); se difiere a otro slice.
 
-  @@map("agencias")
+  @@map("agencia")
 }
