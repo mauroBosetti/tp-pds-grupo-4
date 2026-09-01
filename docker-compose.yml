@@ -1,10 +1,26 @@
 services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ctv
+      POSTGRES_PASSWORD: ctv
+      POSTGRES_DB: ctv
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   ctv-backend:
     build: ./packages/ctv-backend
     image: ctv-backend
     ports:
       - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://ctv:ctv@db:5432/ctv
     restart: unless-stopped
+    depends_on:
+      - db
 
   ctv-frontend:
     build: ./packages/ctv-frontend
@@ -14,3 +30,6 @@ services:
     restart: unless-stopped
     depends_on:
       - ctv-backend
+
+volumes:
+  db-data:
