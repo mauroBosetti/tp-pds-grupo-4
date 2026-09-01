@@ -1,21 +1,14 @@
-import { useEffect, useState } from 'react'
-
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import CrearAgencia from './paginas/CrearAgencia'
+import DetalleAgencia from './paginas/DetalleAgencia'
 
 export default function App() {
-  const [mensaje, setMensaje] = useState('Cargando...')
-
-  useEffect(() => {
-    fetch(`${API_URL}/hola`)
-      .then((res) => res.text())
-      .then(setMensaje)
-      .catch(() => setMensaje('Error al conectar con el backend'))
-  }, [])
-
   return (
-    <main>
-      <h1>CTV Frontend</h1>
-      <p>Respuesta del backend: {mensaje}</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<CrearAgencia />} />
+        <Route path="/agencias/:id" element={<DetalleAgencia />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
