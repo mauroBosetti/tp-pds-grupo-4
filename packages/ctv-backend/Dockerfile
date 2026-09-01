@@ -13,11 +13,10 @@ FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install only production dependencies
 COPY package.json ./
-RUN npm install --omit=dev
-
+COPY prisma ./prisma
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3000
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]

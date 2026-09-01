@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agencia {
+  id            String  @id @default(uuid()) @db.Uuid
+  nombre        String
+  codigoDeGrupo String? @map("codigo_de_grupo")
+  // TODO: el MER pide codigo_de_grupo NOT NULL (char(6)); se difiere a otro slice.
+
+  @@map("agencias")
+}
