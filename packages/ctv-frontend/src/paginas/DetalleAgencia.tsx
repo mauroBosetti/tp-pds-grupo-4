@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { obtenerAgencia, type Agencia } from '../api/agencias'
+import { Link, useParams } from 'react-router-dom'
+import { obtenerAgencia, type Agencia } from '@/api/agencias'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 type Estado =
   | { situacion: 'cargando' }
@@ -18,18 +20,30 @@ export default function DetalleAgencia() {
       .catch(() => setEstado({ situacion: 'error', mensaje: 'No se encontró la agencia.' }))
   }, [id])
 
-  if (estado.situacion === 'cargando') {
-    return <main><p>Cargando agencia...</p></main>
-  }
-
-  if (estado.situacion === 'error') {
-    return <main><p role="alert">{estado.mensaje}</p></main>
-  }
-
   return (
-    <main>
-      <h1>{estado.agencia.nombre}</h1>
-      <p>Esta agencia todavía no tiene vuelos ni paquetes.</p>
+    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      {estado.situacion === 'cargando' && (
+        <p className="text-sm text-muted-foreground">Cargando agencia...</p>
+      )}
+      {estado.situacion === 'error' && (
+        <p role="alert" className="text-sm text-destructive">{estado.mensaje}</p>
+      )}
+      {estado.situacion === 'listo' && (
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>{estado.agencia.nombre}</CardTitle>
+            <CardDescription>Agencia</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+              Esta agencia todavía no tiene vuelos ni paquetes.
+            </p>
+            <Button asChild variant="outline">
+              <Link to="/">Crear otra agencia</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </main>
   )
 }
