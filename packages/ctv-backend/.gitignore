@@ -1,1 +1,5 @@
 dist/
+generated
+.env
+*.log
+ERD.svg

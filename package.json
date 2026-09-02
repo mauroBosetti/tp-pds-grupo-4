@@ -8,5 +8,10 @@
   "dependencies": {
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
+  },
+  "allowScripts": {
+    "puppeteer@25.9.0": true,
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true
   }
 }

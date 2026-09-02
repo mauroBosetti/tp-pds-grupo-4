@@ -1,0 +1,252 @@
+datasource db {
+  provider = "postgresql"
+  // sin "url" acá: ahora vive en prisma.config.ts
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+// Genera un diagrama entidad-relación (ERD) cada vez que se corre `prisma generate`
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../ERD.svg"
+  theme    = "forest"
+}
+
+// ==========================================================
+// ENUMS
+// ==========================================================
+
+enum Rol {
+  COMPRADOR
+  AGENCIA
+  ADMINISTRADOR
+}
+
+enum EstadoCompra {
+  CONFIRMADA
+  CANCELADA
+}
+
+// ==========================================================
+// USUARIOS Y PERFILES
+// ==========================================================
+
+/// Entidad base de autenticación. Cada Usuario tiene UN rol,
+/// y según ese rol se relaciona 1 a 1 con su perfil correspondiente.
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  apellido  String
+  telefono  String?
+  rol       Rol
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  perfilComprador     PerfilComprador?
+  perfilAgencia       PerfilAgencia?
+  perfilAdministrador PerfilAdministrador?
+
+  @@map("usuarios")
+}
+
+/// Perfil de un usuario Comprador: favoritos, compras y comentarios.
+model PerfilComprador {
+  id              String    @id @default(uuid())
+  usuarioId       String    @unique
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  dni             String?   @unique
+  fechaNacimiento DateTime?
+
+  favoritos   PaqueteFavorito[]
+  compras     Compra[]
+  comentarios Comentario[]
+
+  @@map("perfiles_comprador")
+}
+
+/// Perfil de un usuario que administra una Agencia (ABM de paquetes).
+model PerfilAgencia {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  agenciaId String
+  agencia   Agencia @relation(fields: [agenciaId], references: [id])
+  cargo     String?
+
+  @@map("perfiles_agencia")
+}
+
+/// Perfil de un usuario Administrador de la plataforma.
+model PerfilAdministrador {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("perfiles_administrador")
+}
+
+// ==========================================================
+// AGENCIAS
+// ==========================================================
+
+/// La agencia como entidad de negocio (la crea el Administrador).
+model Agencia {
+  id        String   @id @default(uuid())
+  nombre    String
+  cuit      String   @unique
+  email     String   @unique
+  telefono  String?
+  direccion String?
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  empleados PerfilAgencia[]
+  paquetes  Paquete[]
+
+  @@map("agencias")
+}
+
+// ==========================================================
+// HOTELES
+// ==========================================================
+
+/// Entidad informativa y reutilizable entre paquetes. No maneja fechas.
+model Hotel {
+  id          String  @id @default(uuid())
+  nombre      String
+  destino     String
+  direccion   String?
+  foto        String?
+  descripcion String?
+  estrellas   Int?
+
+  createdAt DateTime @default(now())
+
+  paquetes Paquete[]
+
+  @@index([destino])
+  @@map("hoteles")
+}
+
+// ==========================================================
+// VUELOS (obtenidos desde la API externa de vuelos)
+// ==========================================================
+
+/// Snapshot de un vuelo consultado en la API externa (implementada
+/// por el propio equipo, pero tratada como servicio de terceros).
+model Vuelo {
+  id               String   @id @default(uuid())
+  externalFlightId String   @unique
+  aerolinea        String
+  numeroVuelo      String
+  origen           String
+  destino          String
+  fechaHoraSalida  DateTime
+  fechaHoraLlegada DateTime
+  precio           Decimal  @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  paquetesIda    Paquete[] @relation("VueloIda")
+  paquetesVuelta Paquete[] @relation("VueloVuelta")
+
+  @@map("vuelos")
+}
+
+// ==========================================================
+// PAQUETES
+// ==========================================================
+
+/// Un paquete = 1 vuelo de ida + 1 vuelo de vuelta + 1 hotel, ofrecido
+/// por una agencia. Es único dentro de esa agencia (nombre + agenciaId).
+model Paquete {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String?
+  precio      Decimal  @db.Decimal(10, 2)
+  destino     String
+  fechaInicio DateTime
+  fechaFin    DateTime
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agenciaId String
+  agencia   Agencia @relation(fields: [agenciaId], references: [id])
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+
+  vueloIdaId String
+  vueloIda   Vuelo  @relation("VueloIda", fields: [vueloIdaId], references: [id])
+
+  vueloVueltaId String
+  vueloVuelta   Vuelo  @relation("VueloVuelta", fields: [vueloVueltaId], references: [id])
+
+  favoritos   PaqueteFavorito[]
+  compras     Compra[]
+  comentarios Comentario[]
+
+  @@unique([nombre, agenciaId])
+  @@index([destino])
+  @@index([precio])
+  @@map("paquetes")
+}
+
+// ==========================================================
+// FAVORITOS
+// ==========================================================
+
+model PaqueteFavorito {
+  id                String   @id @default(uuid())
+  perfilCompradorId String
+  perfilComprador   PerfilComprador @relation(fields: [perfilCompradorId], references: [id], onDelete: Cascade)
+  paqueteId         String
+  paquete           Paquete  @relation(fields: [paqueteId], references: [id], onDelete: Cascade)
+  fechaAgregado     DateTime @default(now())
+
+  @@unique([perfilCompradorId, paqueteId])
+  @@map("paquetes_favoritos")
+}
+
+// ==========================================================
+// COMPRAS
+// ==========================================================
+
+/// Guarda el precio del paquete al momento de la compra (snapshot),
+/// para poder consultar el historial aunque el precio actual cambie.
+model Compra {
+  id                String       @id @default(uuid())
+  perfilCompradorId String
+  perfilComprador   PerfilComprador @relation(fields: [perfilCompradorId], references: [id])
+  paqueteId         String
+  paquete           Paquete      @relation(fields: [paqueteId], references: [id])
+  precioAlMomento   Decimal      @db.Decimal(10, 2)
+  estado            EstadoCompra @default(CONFIRMADA)
+  fechaCompra       DateTime     @default(now())
+
+  @@map("compras")
+}
+
+// ==========================================================
+// COMENTARIOS Y PUNTAJES
+// ==========================================================
+
+model Comentario {
+  id                String   @id @default(uuid())
+  perfilCompradorId String
+  perfilComprador   PerfilComprador @relation(fields: [perfilCompradorId], references: [id], onDelete: Cascade)
+  paqueteId         String
+  paquete           Paquete  @relation(fields: [paqueteId], references: [id], onDelete: Cascade)
+  texto             String?
+  puntaje           Int
+  fecha             DateTime @default(now())
+
+  @@map("comentarios")
+}

@@ -7,20 +7,29 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed"
   },
   "keywords": [],
   "dependencies": {
+    "@prisma/client": "^7.10.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.17.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.13.3",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "prisma": "^7.10.0",
+    "prisma-erd-generator": "^3.2.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3"
   }
 }
