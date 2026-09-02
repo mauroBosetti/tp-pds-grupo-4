@@ -74,6 +74,23 @@ docker compose up --build
 - Frontend en `http://localhost:8080`
 - Backend en `http://localhost:3000`
 
+## Cuentas de administrador
+
+La UI de administración vive en `/admin` y requiere iniciar sesión en `/admin/login`.
+Solo administradores autenticados pueden crear agencias (`POST /api/agencias` exige un
+token JWT). No hay UI para dar de alta administradores: las cuentas iniciales se crean
+con un seed.
+
+```bash
+# Crea/actualiza las 3 cuentas de administrador (idempotente)
+npm run seed -w ctv-backend
+```
+
+Las credenciales y el `JWT_SECRET` se toman de variables de entorno; ver
+`packages/ctv-backend/.env.example` (`ADMIN{1,2,3}_*`, `JWT_SECRET`). Cada usuario de rol
+(por ahora `UsuarioAdministrador`) compone una `Cuenta`, que concentra lo necesario para
+autenticar (email + hash de la clave) de forma independiente del rol.
+
 ## Convenciones de código
 
 - **TypeScript en todo lo nuevo.** Evitá `any`; si un tipo cuesta, es señal de que el
