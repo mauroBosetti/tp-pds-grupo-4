@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { registrarAgencia, obtenerAgencia, NombreDeAgenciaInvalido } from './agenciasServicio.js'
+import { registrarAgencia, obtenerAgencia, NombreDeAgenciaInvalido } from '../agencias/agenciasServicio.js'
 
-export const agenciasRutas = Router()
+const agencyRouter: Router = Router()
 
-agenciasRutas.post('/agencias', async (req, res) => {
+agencyRouter.post('/', async (req, res) => {
   try {
     const agencia = await registrarAgencia(req.body?.nombre)
     res.status(201).json(agencia)
@@ -16,7 +16,7 @@ agenciasRutas.post('/agencias', async (req, res) => {
   }
 })
 
-agenciasRutas.get('/agencias/:id', async (req, res) => {
+agencyRouter.get('/:id', async (req, res) => {
   const agencia = await obtenerAgencia(req.params.id)
   if (!agencia) {
     res.status(404).json({ error: 'Agencia no encontrada' })
@@ -24,3 +24,5 @@ agenciasRutas.get('/agencias/:id', async (req, res) => {
   }
   res.json(agencia)
 })
+
+export { agencyRouter }
