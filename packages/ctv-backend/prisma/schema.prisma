@@ -15,3 +15,22 @@ model Agencia {
 
   @@map("agencia")
 }
+
+model Cuenta {
+  id        String @id @default(uuid()) @db.Uuid
+  email     String @unique
+  hashClave String @map("hash_clave")
+
+  usuarioAdministrador UsuarioAdministrador?
+
+  @@map("cuenta")
+}
+
+model UsuarioAdministrador {
+  id       String @id @default(uuid()) @db.Uuid
+  nombre   String
+  cuentaId String @unique @map("cuenta_id") @db.Uuid
+  cuenta   Cuenta @relation(fields: [cuentaId], references: [id])
+
+  @@map("usuario_administrador")
+}
