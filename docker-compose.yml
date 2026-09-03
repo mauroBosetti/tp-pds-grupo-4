@@ -14,3 +14,18 @@ services:
     restart: unless-stopped
     depends_on:
       - ctv-backend
+
+  ctv-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ctv_user
+      POSTGRES_PASSWORD: ctv_pass
+      POSTGRES_DB: ctv_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ctv_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  ctv_postgres_data:

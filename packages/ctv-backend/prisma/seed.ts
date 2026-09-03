@@ -1,8 +1,29 @@
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from '../generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+
+// ¡Problema resuelto! Ya no da error de argumentos
+const prisma = new PrismaClient({ adapter }); 
+
 
 async function main() {
+  console.log('Limpiando base de datos...');
+  // Borra los datos existentes de atrás hacia adelante (hijos primero, padres después)
+  await prisma.paqueteFavorito.deleteMany();
+  await prisma.paquete.deleteMany();
+  await prisma.vuelo.deleteMany();
+  await prisma.hotel.deleteMany();
+  await prisma.perfilAgencia.deleteMany();
+  await prisma.perfilComprador.deleteMany();
+  await prisma.perfilAdministrador.deleteMany();
+  await prisma.agencia.deleteMany();
+  await prisma.usuario.deleteMany();
+  
+  console.log('Insertando nuevos datos de prueba...');
+  // Aquí continúa tu código tal cual lo tienes con los .create()...
   const admin = await prisma.usuario.create({
     data: {
       email: 'admin@ctv.com',
