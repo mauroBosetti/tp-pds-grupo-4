@@ -1,9 +1,10 @@
 import { Router } from 'express'
 import { registrarAgencia, obtenerAgencia, NombreDeAgenciaInvalido } from '../agencias/agenciasServicio.js'
+import { requiereAdministrador } from '../auth/requiereAdministrador.js'
 
 const agencyRouter: Router = Router()
 
-agencyRouter.post('/', async (req, res) => {
+agencyRouter.post('/', requiereAdministrador, async (req, res) => {
   try {
     const agencia = await registrarAgencia(req.body?.nombre)
     res.status(201).json(agencia)
