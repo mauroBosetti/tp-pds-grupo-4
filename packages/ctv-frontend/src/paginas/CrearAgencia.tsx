@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { crearAgencia } from '@/api/agencias'
+import { crearAgencia, SinAutorizacion } from '@/api/agencias'
+import { useAuthAdministrador } from '@/auth/AuthAdministradorContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,6 +11,7 @@ export default function CrearAgencia() {
   const [nombre, setNombre] = useState('')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const { cerrarSesion } = useAuthAdministrador()
   const navegar = useNavigate()
 
   async function manejarEnvio(evento: React.FormEvent) {
@@ -19,7 +21,12 @@ export default function CrearAgencia() {
     try {
       const agencia = await crearAgencia(nombre)
       navegar(`/agencias/${agencia.id}`)
-    } catch {
+    } catch (fallo) {
+      if (fallo instanceof SinAutorizacion) {
+        cerrarSesion()
+        navegar('/admin/login')
+        return
+      }
       setError('No se pudo crear la agencia. Intentá de nuevo.')
       setEnviando(false)
     }
@@ -47,6 +54,16 @@ export default function CrearAgencia() {
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={enviando || nombre.trim() === ''}>
               {enviando ? 'Creando...' : 'Crear'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                cerrarSesion()
+                navegar('/admin/login')
+              }}
+            >
+              Cerrar sesión
             </Button>
           </form>
         </CardContent>
