@@ -1,5 +1,9 @@
 dist/
+<<<<<<< HEAD
 generated
 .env
 *.log
 ERD.svg
+=======
+.env
+>>>>>>> d5830ef14bacedfb84a6fe67bdaa084b9a4baac0

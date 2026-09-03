@@ -18,9 +18,9 @@ Para correr prisma migrate
 
 ```npm run db:migrate -w ctv-backend```
 
-   * docker-compose up ctv-postgres
+   * docker-compose up db
    * resultado en packages\ctv-backend\prisma\migrations\
-   * ```npm run db:migrate:reset -w ctv-backend``` para borrar datos y aplicar un migrate limpio con el flag --skip-seed
+   * ```npm run db:migrate:reset -w ctv-backend``` para borrar datos y aplicar un migrate limpio.
 
 Datos de prueba
 

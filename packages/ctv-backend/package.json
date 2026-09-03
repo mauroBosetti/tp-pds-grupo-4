@@ -5,12 +5,13 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "npx prisma migrate dev --name init && prisma generate && tsc",
+    "reset": "npx prisma migrate reset && prisma generate && tsc",
     "start": "node dist/index.js",
+
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:reset": "prisma migrate reset --skip-seed",
+    "db:migrate:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },
@@ -21,7 +22,9 @@
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.17.0",
