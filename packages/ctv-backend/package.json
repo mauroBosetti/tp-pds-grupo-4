@@ -11,33 +11,42 @@
     "reset": "prisma migrate reset",
     "start": "node dist/index.js",
     "seed": "prisma db seed",
-    "test": "vitest run"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "test": "vitest run",
+
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:reset": "prisma migrate reset",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "dependencies": {
-    "@prisma/client": "^6.1.0",
     "bcryptjs": "^3.0.2",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^5.1.0",
+    "pg": "^8.23.0",
     "jsonwebtoken": "^9.0.2",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.17.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/node": "^24.13.3",
+    "@types/pg": "^8.23.1",
+    "prisma": "^7.10.0",
+    "prisma-erd-generator": "^3.2.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^24.0.0",
     "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
-    "prisma": "^6.1.0",
     "supertest": "^7.2.2",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
     "vitest": "^4.1.11"
   }
 }
