@@ -2,12 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import YAML from 'yamljs'
 import swaggerUi from 'swagger-ui-express'
-import { agencyRouter } from './routes/agency.js'
-import { authRouter } from './routes/auth.js'
-import { packageRouter } from './routes/package.js'
-import { reportRouter } from './routes/report.js'
-import { reviewRouter } from './routes/review.js'
-import { userRouter } from './routes/user.js'
+import {agencyRouter} from "./agencias/agenciasRutas.js";
+import {authRouter} from "./auth/authRutas.js";
+import {packageRouter} from "./paquetes/paquetesRutas.js";
+import {reportRouter} from "./reportes/reportesRutas.js";
+import {reviewRouter} from "./opiniones/opinionesRutas.js";
+import {userRouter} from "./usuarios/usuariosRutas.js";
 
 const app = express()
 const port = Number(process.env.PORT) || 3000

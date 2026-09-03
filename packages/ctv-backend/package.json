@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "npx prisma migrate dev --name init && prisma generate && tsc",
+    "reset": "npx prisma migrate reset && prisma generate && tsc",
     "start": "node dist/index.js",
     "seed": "prisma db seed",
     "test": "vitest run"
