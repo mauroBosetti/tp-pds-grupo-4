@@ -5,7 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 // Genera un diagrama entidad-relación (ERD) cada vez que se corre `prisma generate`
@@ -13,6 +13,7 @@ generator erd {
   provider = "prisma-erd-generator"
   output   = "../ERD.svg"
   theme    = "forest"
+  mmdcPath = "../../node_modules/.bin"
 }
 
 model Agencia {

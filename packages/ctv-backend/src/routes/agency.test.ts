@@ -3,7 +3,7 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
 import { registrarAgencia } from '../agencias/agenciasServicio.js'
-import { agencyRouter } from './agency.js'
+import {agencyRouter} from "../agencias/agenciasRutas";
 
 vi.mock('../agencias/agenciasServicio.js', async (importarReal) => {
   const real = await importarReal<typeof import('../agencias/agenciasServicio.js')>()
