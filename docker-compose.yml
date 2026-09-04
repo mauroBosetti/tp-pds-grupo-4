@@ -12,7 +12,10 @@ services:
     restart: unless-stopped
 
   ctv-backend:
-    build: ./packages/ctv-backend
+    build:
+      context: ./packages/ctv-backend
+      args:
+        - DATABASE_URL=postgresql://ctv:ctv@db:5432/ctv
     image: ctv-backend
     ports:
       - "3000:3000"
