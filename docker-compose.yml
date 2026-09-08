@@ -1,5 +1,5 @@
 services:
-  db:
+  db-ctv:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ctv
@@ -8,19 +8,31 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-ctv-data:/var/lib/postgresql/data
+    restart: unless-stopped
+  db-vuelos:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vuelos
+      POSTGRES_PASSWORD: vuelos
+      POSTGRES_DB: vuelos
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-vuelos-data:/var/lib/postgresql/data
+      - ./packages/API-vuelos/src/db:/docker-entrypoint-initdb.d
     restart: unless-stopped
 
   ctv-backend:
     build:
       context: ./packages/ctv-backend
       args:
-        - DATABASE_URL=postgresql://ctv:ctv@db:5432/ctv
+        - DATABASE_URL=postgresql://ctv:ctv@db-ctv:5432/ctv
     image: ctv-backend
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://ctv:ctv@db:5432/ctv
+      DATABASE_URL: postgresql://ctv:ctv@db-ctv:5432/ctv
       ADMIN1_NOMBRE: "Admin Uno"
       ADMIN1_EMAIL: "admin1@ctv.com"
       ADMIN1_PASSWORD: "admin1234"
@@ -32,7 +44,7 @@ services:
       ADMIN3_PASSWORD: "admin1234"
     restart: unless-stopped
     depends_on:
-      - db
+      - db-ctv
 
   ctv-frontend:
     build: ./packages/ctv-frontend
@@ -43,5 +55,18 @@ services:
     depends_on:
       - ctv-backend
 
+  api-vuelos:
+    build:
+      context: ./packages/api-vuelos
+    image: api-vuelos
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://vuelos:vuelos@db-vuelos:5432/vuelos
+    restart: unless-stopped
+    depends_on:
+      - db-vuelos
+
 volumes:
-  db-data:
+  db-ctv-data:
+  db-vuelos-data:
