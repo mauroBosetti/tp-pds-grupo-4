@@ -4,18 +4,42 @@ import {Pool} from "pg";
 
 const app = express()
 const port = Number(process.env.PORT) || 4000
-
+const connectionString = process.env.DATABASE_URL || "postgresql://postgres:root@localhost:5432/db_vuelos" // TODO sacar a un .env.dev
 process.env.PORT || console.warn('Puerto no especificado')
 process.env.DATABASE_URL || console.warn('DATABASE_URL no especificada')
 
 app.use(cors())
 app.use(json())
 
-const pool = new Pool({connectionString: process.env.DATABASE_URL});
+const pool = new Pool({connectionString});
+
+function setParams(query, params, fecha, destino, origen) {
+    if (fecha) {
+        params.push(fecha);
+        query += ` AND fecha::date = $${params.length}`;
+    }
+
+    if (destino) {
+        params.push(destino);
+        query += ` AND destino ILIKE $${params.length}`;
+    }
+
+    if (origen) {
+        params.push(origen);
+        query += ` AND origen ILIKE $${params.length}`;
+    }
+    return query;
+}
 
 app.get("/api/vuelos", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM vuelos WHERE disponibilidad > 0");
+        const { fecha, destino, origen } = req.query;
+
+        const params = [];
+        let query = "SELECT * FROM vuelos WHERE disponibilidad > 0";
+        query = setParams(query, params, fecha, destino, origen);
+
+        const result = await pool.query(query, params);
 
         const vuelos = result.rows.map((v) => ({
             ...v,
