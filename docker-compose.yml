@@ -63,6 +63,7 @@ services:
       - "4000:4000"
     environment:
       DATABASE_URL: postgresql://vuelos:vuelos@db-vuelos:5432/vuelos
+      PORT: 4000
     restart: unless-stopped
     depends_on:
       - db-vuelos

@@ -5,6 +5,9 @@ import {Pool} from "pg";
 const app = express()
 const port = Number(process.env.PORT) || 4000
 
+process.env.PORT || console.warn('Puerto no especificado')
+process.env.DATABASE_URL || console.warn('DATABASE_URL no especificada')
+
 app.use(cors())
 app.use(json())
 
