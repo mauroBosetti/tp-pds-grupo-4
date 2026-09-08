@@ -12,12 +12,24 @@ services:
     restart: unless-stopped
 
   ctv-backend:
-    build: ./packages/ctv-backend
+    build:
+      context: ./packages/ctv-backend
+      args:
+        - DATABASE_URL=postgresql://ctv:ctv@db:5432/ctv
     image: ctv-backend
     ports:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://ctv:ctv@db:5432/ctv
+      ADMIN1_NOMBRE: "Admin Uno"
+      ADMIN1_EMAIL: "admin1@ctv.com"
+      ADMIN1_PASSWORD: "admin1234"
+      ADMIN2_NOMBRE: "Admin Dos"
+      ADMIN2_EMAIL: "admin2@ctv.com"
+      ADMIN2_PASSWORD: "admin1234"
+      ADMIN3_NOMBRE: "Admin Tres"
+      ADMIN3_EMAIL: "admin3@ctv.com"
+      ADMIN3_PASSWORD: "admin1234"
     restart: unless-stopped
     depends_on:
       - db
