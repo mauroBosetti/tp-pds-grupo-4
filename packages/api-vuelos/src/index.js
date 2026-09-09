@@ -55,24 +55,41 @@ app.get("/api/vuelos", async (req, res) => {
 });
 
 app.post("/api/venta", async (req, res) => {
-    const {id_vuelo, pasajero} = req.body;
+    const { id_vuelo, pasajero } = req.body;
+
+    const client = await pool.connect();
 
     try {
-        const result = await pool.query(`UPDATE vuelos
-                                         SET disponibilidad = disponibilidad - 1
-                                         WHERE id_vuelo = $1
-                                           AND disponibilidad > 0 RETURNING *`, [id_vuelo]);
+        await client.query("BEGIN");
+
+        const result = await client.query(
+            `UPDATE vuelos
+             SET disponibilidad = disponibilidad - 1
+             WHERE id_vuelo = $1 AND disponibilidad > 0
+                 RETURNING *`,
+            [id_vuelo]
+        );
 
         if (result.rowCount === 0) {
-            return res.status(400).json({error: "Vuelo sin disponibilidad o inexistente"});
+            await client.query("ROLLBACK");
+            return res.status(400).json({ error: "Vuelo sin disponibilidad o inexistente" });
         }
 
-        // TODO: registrar el nombre del pasajero en alguna tabla de ventas si hace falta
+        await client.query(
+            `INSERT INTO ventas (id_vuelo, nombre_pasajero, fecha_compra)
+       VALUES ($1, $2, NOW())`,
+            [id_vuelo, pasajero]
+        );
 
-        res.json({id_vuelo, pasajero});
+        await client.query("COMMIT");
+
+        res.json({ id_vuelo, pasajero });
     } catch (err) {
+        await client.query("ROLLBACK");
         console.error(err);
-        res.status(500).json({error: "Error registrando la venta"});
+        res.status(500).json({ error: "Error registrando la venta" });
+    } finally {
+        client.release();
     }
 });
 

@@ -8,6 +8,13 @@ CREATE TABLE IF NOT EXISTS vuelos (
     disponibilidad int NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS ventas (
+    id_venta SERIAL PRIMARY KEY,
+    id_vuelo INTEGER NOT NULL REFERENCES vuelos(id_vuelo),
+    nombre_pasajero TEXT NOT NULL,
+    fecha_compra TIMESTAMP NOT NULL
+);
+
 INSERT INTO vuelos (aerolinea, origen, destino, fecha, capacidad, disponibilidad) VALUES
 ('Aerolíneas Argentinas', 'Buenos Aires', 'Madrid', '2027-07-01 10:00:00', 150, 100),
 ('Iberia', 'Madrid', 'Buenos Aires', '2027-07-02 15:00:00', 150, 80),
