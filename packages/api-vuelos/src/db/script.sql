@@ -1,16 +1,16 @@
 CREATE TABLE IF NOT EXISTS vuelos (
     id_vuelo SERIAL PRIMARY KEY,
     aerolinea VARCHAR(100) NOT NULL,
-    origen varchar(255) NOT NULL,
-    destino varchar(255) NOT NULL,
-    fecha timestamp NOT NULL,
+    origen VARCHAR(255) NOT NULL,
+    destino VARCHAR(255) NOT NULL,
+    fecha TIMESTAMP NOT NULL,
     capacidad INT NOT NULL,
-    disponibilidad int NOT NULL
+    disponibilidad INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ventas (
     id_venta SERIAL PRIMARY KEY,
-    id_vuelo INTEGER NOT NULL REFERENCES vuelos(id_vuelo),
+    id_vuelo INT NOT NULL REFERENCES vuelos(id_vuelo),
     nombre_pasajero TEXT NOT NULL,
     fecha_compra TIMESTAMP NOT NULL
 );

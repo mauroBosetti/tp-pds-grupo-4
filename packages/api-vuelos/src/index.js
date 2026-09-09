@@ -3,7 +3,7 @@ import cors from "cors";
 import {Pool} from "pg";
 
 const app = express()
-const port = Number(process.env.PORT) || 4000
+const port = Number(process.env.PORT) || 4001
 const connectionString = process.env.DATABASE_URL || "postgresql://postgres:root@localhost:5432/db_vuelos" // TODO sacar a un .env.dev
 process.env.PORT || console.warn('Puerto no especificado')
 process.env.DATABASE_URL || console.warn('DATABASE_URL no especificada')
@@ -43,8 +43,8 @@ app.get("/api/vuelos", async (req, res) => {
 
         const vuelos = result.rows.map((v) => ({
             ...v,
-            fecha: v.fecha instanceof Date ? v.fecha.toISOString().split("T")[0] : v.fecha,
-            hora: typeof v.hora === "string" && !v.hora.endsWith("Z") ? `${v.hora}Z` : v.hora,
+            fecha: v.fecha.toISOString().split("T")[0],
+            hora:  v.fecha.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC", second: '2-digit' })
         }));
 
         res.json(vuelos);
