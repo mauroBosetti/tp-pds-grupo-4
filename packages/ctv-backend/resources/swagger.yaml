@@ -8,7 +8,9 @@ info:
     principal y los endpoints requeridos para la API externa de Vuelos.
 servers:
   - url: http://localhost:3000/api
-    description: Servidor de Desarrollo Local
+    description: Servidor de CTV
+  - url: http://localhost:4000/api
+    description: Servidor de API de vuelos
 tags:
   - name: Autenticación
     description: Gestión de registro y login de usuarios
