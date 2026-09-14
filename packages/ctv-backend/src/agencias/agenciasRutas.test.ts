@@ -2,11 +2,11 @@ import express from 'express'
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
-import { registrarAgencia } from '../agencias/agenciasServicio.js'
-import { agencyRouter } from './agency.js'
+import { registrarAgencia } from './agenciasServicio.js'
+import { agencyRouter } from './agenciasRutas.js'
 
-vi.mock('../agencias/agenciasServicio.js', async (importarReal) => {
-  const real = await importarReal<typeof import('../agencias/agenciasServicio.js')>()
+vi.mock('./agenciasServicio.js', async (importarReal) => {
+  const real = await importarReal<typeof import('./agenciasServicio.js')>()
   return { ...real, registrarAgencia: vi.fn(), obtenerAgencia: vi.fn() }
 })
 
@@ -44,7 +44,7 @@ describe('POST /api/agencias', () => {
   })
 
   it('crea la agencia con un token de administrador válido', async () => {
-    registrar.mockResolvedValue({ id: 'a-1', nombre: 'Turismo', codigoDeGrupo: null })
+    registrar.mockResolvedValue({ id: 'a-1', nombre: 'Turismo', codigoDeGrupo: '12345678' })
 
     const respuesta = await request(crearApp())
       .post('/api/agencias')
@@ -52,7 +52,7 @@ describe('POST /api/agencias', () => {
       .send({ nombre: 'Turismo' })
 
     expect(respuesta.status).toBe(201)
-    expect(respuesta.body).toMatchObject({ nombre: 'Turismo' })
+    expect(respuesta.body).toMatchObject({ nombre: 'Turismo', codigoDeGrupo: '12345678' })
     expect(registrar).toHaveBeenCalledWith('Turismo')
   })
 })
