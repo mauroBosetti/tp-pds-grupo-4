@@ -16,7 +16,7 @@ export async function loginAdministrador(
   email: string,
   clave: string,
 ): Promise<ResultadoLoginAdministrador> {
-  const respuesta = await fetch(`${API_URL}/api/auth/administrador/login`, {
+  const respuesta = await fetch(`${API_URL}/auth/administrador/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, clave }),

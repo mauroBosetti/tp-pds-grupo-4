@@ -47,7 +47,12 @@ services:
       - db-ctv
 
   ctv-frontend:
-    build: ./packages/ctv-frontend
+    build:
+      context: .
+      dockerfile: ./packages/ctv-frontend/Dockerfile
+      args:
+        - INSTALL_MODE=precache
+        - VITE_API_URL=/api
     image: ctv-frontend
     ports:
       - "8080:80"
