@@ -1,6 +1,6 @@
 services:
   db-ctv:
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     environment:
       POSTGRES_USER: ctv
       POSTGRES_PASSWORD: ctv
@@ -11,7 +11,7 @@ services:
       - db-ctv-data:/var/lib/postgresql/data
     restart: unless-stopped
   db-vuelos:
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     environment:
       POSTGRES_USER: vuelos
       POSTGRES_PASSWORD: vuelos

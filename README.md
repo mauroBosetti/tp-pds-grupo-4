@@ -1,5 +1,11 @@
 # TP-PDS-GRUPO-4
 
+## run full project
+
+### W/ Docker Compose
+* ```podman compose up```
+* ```localhost:8080```
+
 ## api-vuelos
 
 ## ctv-backend
