@@ -7,6 +7,7 @@ import LoginAdministrador from './paginas/LoginAdministrador'
 import LoginUsuario from './paginas/LoginUsuario'
 import RegistroUsuarioAgencia from './paginas/RegistroUsuarioAgencia'
 import AgenciaHome from './paginas/AgenciaHome'
+import CrearPaquete from './paginas/CrearPaquete'
 import CrearAgencia from './paginas/CrearAgencia'
 import DetalleAgencia from './paginas/DetalleAgencia'
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/registro" element={<RegistroUsuarioAgencia />} />
             <Route element={<RutaUsuario />}>
               <Route path="/agencia" element={<AgenciaHome />} />
+              <Route path="/agencia/paquetes/nuevo" element={<CrearPaquete />} />
             </Route>
             <Route path="/agencias/:id" element={<DetalleAgencia />} />
           </Routes>

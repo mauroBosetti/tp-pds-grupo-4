@@ -21,8 +21,23 @@ model Agencia {
   codigoDeGrupo String  @unique @map("codigo_de_grupo") @db.Char(8)
 
   usuarios UsuarioAgencia[]
+  paquetes Paquete[]
 
   @@map("agencia")
+}
+
+model Paquete {
+  id            String  @id @default(uuid()) @db.Uuid
+  nombre        String
+  precio        Int
+  origen        String
+  destino       String
+  vueloIdaId    Int     @map("vuelo_ida_id")
+  vueloVueltaId Int     @map("vuelo_vuelta_id")
+  agenciaId     String  @map("agencia_id") @db.Uuid
+  agencia       Agencia @relation(fields: [agenciaId], references: [id])
+
+  @@map("paquete")
 }
 
 model Cuenta {

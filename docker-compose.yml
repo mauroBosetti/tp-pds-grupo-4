@@ -33,6 +33,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://ctv:ctv@db-ctv:5432/ctv
+      API_VUELOS_URL: http://api-vuelos:4000
       ADMIN1_NOMBRE: "Admin Uno"
       ADMIN1_EMAIL: "admin1@ctv.com"
       ADMIN1_PASSWORD: "admin1234"
@@ -45,6 +46,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db-ctv
+      - api-vuelos
 
   ctv-frontend:
     build: ./packages/ctv-frontend
