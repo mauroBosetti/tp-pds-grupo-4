@@ -27,11 +27,12 @@ function crearApp() {
   return app
 }
 
+const agenciaId = 'ag-1';
 const tokenAgencia = firmarToken({
   sub: 'cuenta-1',
   rol: 'agencia',
   nombre: 'Bruno',
-  agenciaId: 'ag-1',
+  agenciaId
 })
 const tokenAdmin = firmarToken({ sub: 'cuenta-2', rol: 'administrador', nombre: 'Ada' })
 
@@ -67,7 +68,7 @@ describe('POST /api/package', () => {
   })
 
   it('crea el paquete con un token de agencia válido', async () => {
-    registrar.mockResolvedValue({ id: 'p-1', ...paqueteValido, agenciaId: 'ag-1' })
+    registrar.mockResolvedValue({ id: 'p-1', ...paqueteValido, agenciaId })
 
     const respuesta = await request(crearApp())
       .post('/api/package')
@@ -76,7 +77,7 @@ describe('POST /api/package', () => {
 
     expect(respuesta.status).toBe(201)
     expect(respuesta.body).toMatchObject({ nombre: 'Escapada a Madrid' })
-    expect(registrar).toHaveBeenCalledWith(expect.objectContaining(paqueteValido), 'ag-1')
+    expect(registrar).toHaveBeenCalledWith(expect.objectContaining(paqueteValido), agenciaId)
   })
 })
 
@@ -93,7 +94,7 @@ describe('GET /api/package', () => {
   })
 
   it('lista los paquetes de la agencia del token', async () => {
-    listar.mockResolvedValue([{ id: 'p-1', ...paqueteValido, agenciaId: 'ag-1' }])
+    listar.mockResolvedValue([{ id: 'p-1', ...paqueteValido, agenciaId }])
 
     const respuesta = await request(crearApp())
       .get('/api/package')
@@ -101,7 +102,7 @@ describe('GET /api/package', () => {
 
     expect(respuesta.status).toBe(200)
     expect(respuesta.body).toHaveLength(1)
-    expect(listar).toHaveBeenCalledWith('ag-1')
+    expect(listar).toHaveBeenCalledWith(agenciaId)
   })
 })
 
