@@ -38,7 +38,7 @@ describe('registrarUsuarioAgencia', () => {
     await expect(
       registrarUsuarioAgencia({ ...datosValidos, nombre: '  ' }),
     ).rejects.toBeInstanceOf(DatosDeRegistroInvalidos)
-    expect(buscarAgencia).not.toHaveBeenCalled()
+    expect(crear).not.toHaveBeenCalled()
   })
 
   it('falla cuando el código no corresponde a ninguna agencia', async () => {
