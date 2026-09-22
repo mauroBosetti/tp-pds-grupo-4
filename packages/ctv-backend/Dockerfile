@@ -1,9 +1,10 @@
-# --- Build stage ---
+# --- Build stage: instala deps + build de TS/Prisma ---
 FROM node:24-alpine AS build
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --prefer-offline
 
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL

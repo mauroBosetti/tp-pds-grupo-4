@@ -13,22 +13,26 @@ COPY packages/ctv-frontend/package.json ./packages/ctv-frontend/
 
 ARG INSTALL_MODE=precache
 
-# 3. Instalación de dependencias con caché de Mount
+# 3. Instalacion de dependencias con cache de Mount
 RUN --mount=type=cache,target=/root/.npm \
     if [ "$INSTALL_MODE" = "precache" ]; then \
       echo "--> Modo PRECACHE: Instalando dependencias del monorepo"; \
       npm ci --workspace=ctv-frontend --include-workspace-root --prefer-offline; \
     else \
-      echo "--> Modo FULL: Instalación limpia desde registro"; \
+      echo "--> Modo FULL: Instalacion limpia desde registro"; \
       npm ci --workspace=ctv-frontend --include-workspace-root; \
     fi
 
-# 4. Inyectar variables de entorno para Vite (antes del código para evitar re-instalaciones)
+# 4. Inyectar variables de entorno para Vite (antes del codigo para evitar re-instalaciones)
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
-# 5. Copiar el código fuente completo e iniciar la compilación
-COPY . .
+# 5. Copiar SOLO el codigo del workspace que se buildea (no todo el monorepo).
+#    Esto evita que un cambio en ctv-backend o api-vuelos invalide esta capa.
+COPY packages/ctv-frontend/ ./packages/ctv-frontend/
+# Si depende de un paquete interno, copialo tambien explicitamente:
+# COPY packages/shared/ ./packages/shared/
+
 RUN npm run build --workspace=ctv-frontend
 
 # --- Serve stage ---

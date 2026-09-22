@@ -11,7 +11,7 @@ export class CodigoDeGrupoInvalido extends Error {}
 export class EmailYaRegistrado extends Error {}
 
 export async function registrarUsuarioAgencia(datos: DatosRegistroUsuarioAgencia): Promise<void> {
-  const respuesta = await fetch(`${API_URL}/api/auth/agencia/registro`, {
+  const respuesta = await fetch(`${API_URL}/auth/agencia/registro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(datos),

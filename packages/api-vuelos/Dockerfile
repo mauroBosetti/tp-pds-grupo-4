@@ -1,11 +1,20 @@
-# --- Build stage ---
+# --- Build stage: instala deps + código fuente ---
 FROM node:24-alpine AS build
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --prefer-offline
+
 COPY . .
 
+# --- Prod deps stage: solo dependencias de producción, en paralelo al build ---
+FROM node:24-alpine AS prod-deps
+WORKDIR /app
+
+COPY package.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --omit=dev --prefer-offline
 
 # --- Runtime stage ---
 FROM node:24-alpine AS runtime
@@ -15,7 +24,7 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/node_modules ./node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
 
 EXPOSE 4000

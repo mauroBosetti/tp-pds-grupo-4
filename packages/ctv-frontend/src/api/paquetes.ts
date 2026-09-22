@@ -38,7 +38,7 @@ function encabezadosConToken(): HeadersInit {
 }
 
 export async function listarPaquetes(): Promise<Paquete[]> {
-  const respuesta = await fetch(`${API_URL}/api/package`, {
+  const respuesta = await fetch(`${API_URL}/package`, {
     headers: encabezadosConToken(),
   })
   if (respuesta.status === 401) {
@@ -52,7 +52,7 @@ export async function listarPaquetes(): Promise<Paquete[]> {
 
 export async function buscarVuelos(origen: string, destino: string): Promise<Vuelo[]> {
   const parametros = new URLSearchParams({ origen, destino })
-  const respuesta = await fetch(`${API_URL}/api/package/vuelos?${parametros}`, {
+  const respuesta = await fetch(`${API_URL}/package/vuelos?${parametros}`, {
     headers: encabezadosConToken(),
   })
   if (respuesta.status === 401) {
@@ -65,7 +65,7 @@ export async function buscarVuelos(origen: string, destino: string): Promise<Vue
 }
 
 export async function crearPaquete(datos: DatosNuevoPaquete): Promise<Paquete> {
-  const respuesta = await fetch(`${API_URL}/api/package`, {
+  const respuesta = await fetch(`${API_URL}/package`, {
     method: 'POST',
     headers: encabezadosConToken(),
     body: JSON.stringify(datos),
