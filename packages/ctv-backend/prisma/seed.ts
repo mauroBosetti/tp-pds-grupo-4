@@ -49,13 +49,14 @@ async function crearAdministradores() {
 async function main() {
   console.log('Limpiando base de datos...');
   // Borra los datos existentes de atrás hacia adelante (hijos primero, padres después)
+  await prisma.usuarioAgencia.deleteMany();
   await prisma.agencia.deleteMany();
 
   console.log('Insertando nuevos datos de prueba...');
-  const agencia = await prisma.agencia.create({
+  await prisma.agencia.create({
     data: {
       nombre: 'Viajes del Sur',
-      codigoDeGrupo: 'sarasa',
+      codigoDeGrupo: '10000001',
     },
   });
 

@@ -1,6 +1,6 @@
 services:
   db-ctv:
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     environment:
       POSTGRES_USER: ctv
       POSTGRES_PASSWORD: ctv
@@ -11,7 +11,7 @@ services:
       - db-ctv-data:/var/lib/postgresql/data
     restart: unless-stopped
   db-vuelos:
-    image: postgres:16-alpine
+    image: docker.io/library/postgres:16-alpine
     environment:
       POSTGRES_USER: vuelos
       POSTGRES_PASSWORD: vuelos
@@ -33,6 +33,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://ctv:ctv@db-ctv:5432/ctv
+      API_VUELOS_URL: http://api-vuelos:4000
       ADMIN1_NOMBRE: "Admin Uno"
       ADMIN1_EMAIL: "admin1@ctv.com"
       ADMIN1_PASSWORD: "admin1234"
@@ -45,6 +46,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db-ctv
+      - api-vuelos
 
   ctv-frontend:
     build:
