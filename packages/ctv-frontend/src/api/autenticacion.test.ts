@@ -31,7 +31,7 @@ describe('loginAdministrador', () => {
     await loginAdministrador('ada@ctv.com', 'secreta')
 
     const [url, opciones] = fetchFalso.mock.calls[0]
-    expect(url).toContain('/api/auth/administrador/login')
+    expect(url).toContain('/auth/administrador/login')
     expect(JSON.parse(opciones.body)).toEqual({ email: 'ada@ctv.com', clave: 'secreta' })
   })
 

@@ -12,7 +12,7 @@ export class SinAutorizacion extends Error {}
 
 export async function crearAgencia(nombre: string): Promise<Agencia> {
   const token = leerTokenAdministrador()
-  const respuesta = await fetch(`${API_URL}/api/agencias`, {
+  const respuesta = await fetch(`${API_URL}/agencias`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export async function crearAgencia(nombre: string): Promise<Agencia> {
 }
 
 export async function obtenerAgencia(id: string): Promise<Agencia> {
-  const respuesta = await fetch(`${API_URL}/api/agencias/${id}`)
+  const respuesta = await fetch(`${API_URL}/agencias/${id}`)
   if (!respuesta.ok) {
     throw new Error('No se pudo obtener la agencia')
   }

@@ -18,10 +18,26 @@ generator erd {
 model Agencia {
   id            String  @id @default(uuid()) @db.Uuid
   nombre        String
-  codigoDeGrupo String? @map("codigo_de_grupo")
-  // TODO: el MER pide codigo_de_grupo NOT NULL (char(6)); se difiere a otro slice.
+  codigoDeGrupo String  @unique @map("codigo_de_grupo") @db.Char(8)
+
+  usuarios UsuarioAgencia[]
+  paquetes Paquete[]
 
   @@map("agencia")
+}
+
+model Paquete {
+  id            String  @id @default(uuid()) @db.Uuid
+  nombre        String
+  precio        Int
+  origen        String
+  destino       String
+  vueloIdaId    Int     @map("vuelo_ida_id")
+  vueloVueltaId Int     @map("vuelo_vuelta_id")
+  agenciaId     String  @map("agencia_id") @db.Uuid
+  agencia       Agencia @relation(fields: [agenciaId], references: [id])
+
+  @@map("paquete")
 }
 
 model Cuenta {
@@ -30,6 +46,7 @@ model Cuenta {
   hashClave String @map("hash_clave")
 
   usuarioAdministrador UsuarioAdministrador?
+  usuarioAgencia       UsuarioAgencia?
 
   @@map("cuenta")
 }
@@ -41,4 +58,15 @@ model UsuarioAdministrador {
   cuenta   Cuenta @relation(fields: [cuentaId], references: [id])
 
   @@map("usuario_administrador")
+}
+
+model UsuarioAgencia {
+  id        String  @id @default(uuid()) @db.Uuid
+  nombre    String
+  cuentaId  String  @unique @map("cuenta_id") @db.Uuid
+  cuenta    Cuenta  @relation(fields: [cuentaId], references: [id])
+  agenciaId String  @map("agencia_id") @db.Uuid
+  agencia   Agencia @relation(fields: [agenciaId], references: [id])
+
+  @@map("usuario_agencia")
 }

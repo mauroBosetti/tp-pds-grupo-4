@@ -14,6 +14,6 @@ export default defineConfig({
 
   // 3. Cadena de conexión segura del ORM de Prisma 7
   datasource: {
-    url: env("DATABASE_URL"), 
+    url: process.env.DATABASE_URL,
   },
 });
