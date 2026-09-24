@@ -8,6 +8,17 @@
 
 ## api-vuelos
 
+#### Cucumber test
+
+```docker compose up -d db-vuelos-test```
+
+```export TEST_DATABASE_URL=postgresql://vuelos_test:vuelos_test@localhost:5434/vuelos_test```
+
+```npm run test -w api-vuelos```
+
+   * para obtener IP local
+```podman machine ssh -- ip -4 addr show eth0```
+ 
 ## ctv-backend
 
 #### ORM prisma 7

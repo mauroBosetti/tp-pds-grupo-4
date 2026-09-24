@@ -10,6 +10,7 @@ services:
     volumes:
       - db-ctv-data:/var/lib/postgresql/data
     restart: unless-stopped
+
   db-vuelos:
     image: docker.io/library/postgres:16-alpine
     environment:
@@ -20,7 +21,19 @@ services:
       - "5433:5432"
     volumes:
       - db-vuelos-data:/var/lib/postgresql/data
-      - ./packages/API-vuelos/src/db:/docker-entrypoint-initdb.d
+      - ./packages/api-vuelos/src/db:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  db-vuelos-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vuelos_test
+      POSTGRES_PASSWORD: vuelos_test
+      POSTGRES_DB: vuelos_test
+    ports:
+      - "5434:5432"
+    volumes:
+      - db-vuelos-test-data:/var/lib/postgresql/data
     restart: unless-stopped
 
   ctv-backend:
@@ -73,3 +86,4 @@ services:
 volumes:
   db-ctv-data:
   db-vuelos-data:
+  db-vuelos-test-data:
