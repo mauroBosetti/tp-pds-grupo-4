@@ -50,6 +50,7 @@ async function main() {
   console.log('Limpiando base de datos...');
   // Borra los datos existentes de atrás hacia adelante (hijos primero, padres después)
   await prisma.usuarioAgencia.deleteMany();
+  await prisma.paquete.deleteMany();
   await prisma.agencia.deleteMany();
 
   console.log('Insertando nuevos datos de prueba...');
