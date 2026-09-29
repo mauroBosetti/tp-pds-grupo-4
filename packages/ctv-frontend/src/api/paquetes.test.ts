@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buscarVuelos, crearPaquete, SinAutorizacion } from './paquetes'
+import { buscarVuelos, crearPaquete, listarCatalogo, SinAutorizacion } from './paquetes'
 import { guardarTokenUsuario } from '@/auth/tokenUsuario'
 
 function responderCon(cuerpo: unknown, init: { status?: number } = {}) {
@@ -56,5 +56,20 @@ describe('api de paquetes', () => {
     vi.stubGlobal('fetch', responderCon({ error: 'no' }, { status: 401 }))
 
     await expect(crearPaquete(paquete)).rejects.toBeInstanceOf(SinAutorizacion)
+  })
+
+  it('listarCatalogo incluye el token del usuario y trae los paquetes de todas las agencias', async () => {
+    guardarTokenUsuario('abc.123')
+    const fetchFalso = responderCon([
+      { id: 'p-1', ...paquete, agenciaId: 'ag-1', agencia: { id: 'ag-1', nombre: 'Turismo Sur' } },
+    ])
+    vi.stubGlobal('fetch', fetchFalso)
+
+    const catalogo = await listarCatalogo()
+
+    const [url, opciones] = fetchFalso.mock.calls[0]
+    expect(url).toContain('/api/package/catalogo')
+    expect(opciones.headers.Authorization).toBe('Bearer abc.123')
+    expect(catalogo[0].agencia.nombre).toBe('Turismo Sur')
   })
 })

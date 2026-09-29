@@ -27,6 +27,10 @@ export interface Paquete extends DatosNuevoPaquete {
   agenciaId: string
 }
 
+export interface PaqueteDeCatalogo extends Paquete {
+  agencia: { id: string; nombre: string }
+}
+
 export class SinAutorizacion extends Error {}
 
 function encabezadosConToken(): HeadersInit {
@@ -46,6 +50,19 @@ export async function listarPaquetes(): Promise<Paquete[]> {
   }
   if (!respuesta.ok) {
     throw new Error('No se pudieron obtener los paquetes')
+  }
+  return respuesta.json()
+}
+
+export async function listarCatalogo(): Promise<PaqueteDeCatalogo[]> {
+  const respuesta = await fetch(`${API_URL}/api/package/catalogo`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudo obtener el catálogo')
   }
   return respuesta.json()
 }
