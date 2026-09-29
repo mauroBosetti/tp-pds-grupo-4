@@ -1,4 +1,4 @@
-import { crearPaquete, buscarPaquetesDeAgencia } from './paquetesRepositorio.js'
+import { crearPaquete, buscarPaquetesDeAgencia, buscarTodosLosPaquetes } from './paquetesRepositorio.js'
 
 export class DatosDePaqueteInvalidos extends Error {
   constructor() {
@@ -47,4 +47,8 @@ export async function registrarPaquete(datos: DatosPaquete, agenciaId: string) {
 
 export function obtenerPaquetesDeAgencia(agenciaId: string) {
   return buscarPaquetesDeAgencia(agenciaId)
+}
+
+export function obtenerCatalogoDePaquetes() {
+  return buscarTodosLosPaquetes()
 }
