@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "test": "cucumber-js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "db:reset": "node scripts/reset-db.js dev",
+    "db:reset:test": "node scripts/reset-db.js test"
   },
   "keywords": [],
   "type": "module",

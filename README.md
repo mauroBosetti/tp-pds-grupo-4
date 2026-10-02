@@ -8,6 +8,9 @@
 
 ## api-vuelos
 
+```npm run db:reset -w api-vuelos```
+```npm run db:reset:test -w api-vuelos```
+
 #### Cucumber test
 
 ```docker compose up -d db-vuelos-test```
