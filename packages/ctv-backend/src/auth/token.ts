@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 const secreto = process.env.JWT_SECRET ?? 'dev-secret-no-usar-en-produccion'
 const duracion = '8h'
 
-export type RolUsuario = 'administrador' | 'agencia' | 'comprador'
+export type RolUsuario = 'administrador' | 'agencia' | 'cliente'
 
 export interface DatosToken {
   sub: string
