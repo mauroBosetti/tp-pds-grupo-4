@@ -20,3 +20,9 @@ export function crearPaquete(datos: DatosNuevoPaquete) {
 export function buscarPaquetesDeAgencia(agenciaId: string) {
   return cliente.paquete.findMany({ where: { agenciaId } })
 }
+
+export function buscarTodosLosPaquetes() {
+  return cliente.paquete.findMany({
+    include: { agencia: { select: { id: true, nombre: true } } },
+  })
+}

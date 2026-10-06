@@ -1,5 +1,10 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
-import { loginUsuario, type UsuarioSesion } from '@/api/autenticacion'
+import {
+  loginAgencia,
+  loginCliente,
+  type ResultadoLoginUsuario,
+  type UsuarioSesion,
+} from '@/api/autenticacion'
 import {
   borrarTokenUsuario,
   borrarUsuario,
@@ -12,7 +17,9 @@ import {
 interface AuthUsuario {
   estaAutenticado: boolean
   usuario: UsuarioSesion | null
-  iniciarSesion: (email: string, clave: string) => Promise<void>
+  iniciarSesionAgencia: (email: string, clave: string) => Promise<void>
+  iniciarSesionCliente: (email: string, clave: string) => Promise<void>
+  iniciarSesion: (email: string, clave: string, tipo?: 'agencia' | 'cliente') => Promise<void>
   cerrarSesion: () => void
 }
 
@@ -22,16 +29,31 @@ export function AuthUsuarioProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => leerTokenUsuario())
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(() => leerUsuario())
 
+  function aplicarSesion(resultado: ResultadoLoginUsuario) {
+    guardarTokenUsuario(resultado.token)
+    guardarUsuario(resultado.usuario)
+    setToken(resultado.token)
+    setUsuario(resultado.usuario)
+  }
+
   const valor = useMemo<AuthUsuario>(
     () => ({
       estaAutenticado: token !== null,
       usuario,
-      async iniciarSesion(email, clave) {
-        const resultado = await loginUsuario(email, clave)
-        guardarTokenUsuario(resultado.token)
-        guardarUsuario(resultado.usuario)
-        setToken(resultado.token)
-        setUsuario(resultado.usuario)
+      async iniciarSesionAgencia(email, clave) {
+        const resultado = await loginAgencia(email, clave)
+        aplicarSesion(resultado)
+      },
+      async iniciarSesionCliente(email, clave) {
+        const resultado = await loginCliente(email, clave)
+        aplicarSesion(resultado)
+      },
+      async iniciarSesion(email, clave, tipo = 'agencia') {
+        const resultado =
+          tipo === 'cliente'
+            ? await loginCliente(email, clave)
+            : await loginAgencia(email, clave)
+        aplicarSesion(resultado)
       },
       cerrarSesion() {
         borrarTokenUsuario()

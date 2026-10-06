@@ -16,9 +16,9 @@ generator erd {
 }
 
 model Agencia {
-  id            String  @id @default(uuid()) @db.Uuid
+  id            String @id @default(uuid()) @db.Uuid
   nombre        String
-  codigoDeGrupo String  @unique @map("codigo_de_grupo") @db.Char(8)
+  codigoDeGrupo String @unique @map("codigo_de_grupo") @db.Char(8)
 
   usuarios UsuarioAgencia[]
   paquetes Paquete[]
@@ -47,6 +47,7 @@ model Cuenta {
 
   usuarioAdministrador UsuarioAdministrador?
   usuarioAgencia       UsuarioAgencia?
+  usuarioCliente       UsuarioCliente?
 
   @@map("cuenta")
 }
@@ -69,4 +70,13 @@ model UsuarioAgencia {
   agencia   Agencia @relation(fields: [agenciaId], references: [id])
 
   @@map("usuario_agencia")
+}
+
+model UsuarioCliente {
+  id       String @id @default(uuid()) @db.Uuid
+  nombre   String
+  cuentaId String @unique @map("cuenta_id") @db.Uuid
+  cuenta   Cuenta @relation(fields: [cuentaId], references: [id])
+
+  @@map("usuario_cliente")
 }
