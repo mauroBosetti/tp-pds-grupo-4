@@ -3,12 +3,21 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
 import { buscarVuelos } from '../vuelos/clienteVuelos.js'
-import { registrarPaquete, obtenerPaquetesDeAgencia } from './paquetesServicio.js'
+import {
+  registrarPaquete,
+  obtenerPaquetesDeAgencia,
+  obtenerCatalogoDePaquetes,
+} from './paquetesServicio.js'
 import { packageRouter } from './paquetesRutas.js'
 
 vi.mock('./paquetesServicio.js', async (importarReal) => {
   const real = await importarReal<typeof import('./paquetesServicio.js')>()
-  return { ...real, registrarPaquete: vi.fn(), obtenerPaquetesDeAgencia: vi.fn() }
+  return {
+    ...real,
+    registrarPaquete: vi.fn(),
+    obtenerPaquetesDeAgencia: vi.fn(),
+    obtenerCatalogoDePaquetes: vi.fn(),
+  }
 })
 
 vi.mock('../vuelos/clienteVuelos.js', async (importarReal) => {
@@ -18,6 +27,7 @@ vi.mock('../vuelos/clienteVuelos.js', async (importarReal) => {
 
 const registrar = vi.mocked(registrarPaquete)
 const listar = vi.mocked(obtenerPaquetesDeAgencia)
+const listarCatalogo = vi.mocked(obtenerCatalogoDePaquetes)
 const buscar = vi.mocked(buscarVuelos)
 
 function crearApp() {
@@ -103,6 +113,56 @@ describe('GET /api/package', () => {
     expect(respuesta.status).toBe(200)
     expect(respuesta.body).toHaveLength(1)
     expect(listar).toHaveBeenCalledWith(agenciaId)
+  })
+})
+
+describe('GET /api/package/catalogo', () => {
+  beforeEach(() => {
+    listarCatalogo.mockReset()
+  })
+
+  it('responde 401 sin token', async () => {
+    const respuesta = await request(crearApp()).get('/api/package/catalogo')
+
+    expect(respuesta.status).toBe(401)
+    expect(listarCatalogo).not.toHaveBeenCalled()
+  })
+
+  it('responde 401 con un token de administrador', async () => {
+    const respuesta = await request(crearApp())
+      .get('/api/package/catalogo')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+
+    expect(respuesta.status).toBe(401)
+    expect(listarCatalogo).not.toHaveBeenCalled()
+  })
+
+  it('devuelve los paquetes de todas las agencias con un token de agencia', async () => {
+    listarCatalogo.mockResolvedValue([
+      { id: 'p-1', ...paqueteValido, agenciaId, agencia: { id: agenciaId, nombre: 'Turismo Sur' } },
+    ])
+
+    const respuesta = await request(crearApp())
+      .get('/api/package/catalogo')
+      .set('Authorization', `Bearer ${tokenAgencia}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toHaveLength(1)
+    expect(listarCatalogo).toHaveBeenCalled()
+  })
+
+  it('devuelve los paquetes de todas las agencias con un token de cliente', async () => {
+    const tokenCliente = firmarToken({ sub: 'cuenta-4', rol: 'cliente', nombre: 'Carlos' })
+    listarCatalogo.mockResolvedValue([
+      { id: 'p-1', ...paqueteValido, agenciaId, agencia: { id: agenciaId, nombre: 'Turismo Sur' } },
+    ])
+
+    const respuesta = await request(crearApp())
+      .get('/api/package/catalogo')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toHaveLength(1)
   })
 })
 

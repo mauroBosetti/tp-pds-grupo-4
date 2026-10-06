@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import { requiereAgencia } from '../auth/requiereAgencia.js'
+import { requiereUsuario } from '../auth/requiereUsuario.js'
 import { buscarVuelos, ApiVuelosNoDisponible } from '../vuelos/clienteVuelos.js'
 import {
   registrarPaquete,
   obtenerPaquetesDeAgencia,
+  obtenerCatalogoDePaquetes,
   DatosDePaqueteInvalidos,
 } from './paquetesServicio.js'
 
@@ -16,6 +18,11 @@ packageRouter.get('/', requiereAgencia, async (req, res) => {
     return
   }
   const paquetes = await obtenerPaquetesDeAgencia(agenciaId)
+  res.json(paquetes)
+})
+
+packageRouter.get('/catalogo', requiereUsuario, async (_req, res) => {
+  const paquetes = await obtenerCatalogoDePaquetes()
   res.json(paquetes)
 })
 

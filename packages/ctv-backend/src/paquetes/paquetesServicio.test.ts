@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cliente } from '../db/cliente.js'
-import { DatosDePaqueteInvalidos, registrarPaquete } from './paquetesServicio.js'
+import {
+  DatosDePaqueteInvalidos,
+  registrarPaquete,
+  obtenerCatalogoDePaquetes,
+} from './paquetesServicio.js'
 
 vi.mock('../db/cliente.js', () => ({
   cliente: {
-    paquete: { create: vi.fn() },
+    paquete: { create: vi.fn(), findMany: vi.fn() },
   },
 }))
 
 const crearPaquete = vi.mocked(cliente.paquete.create)
+const buscarPaquetes = vi.mocked(cliente.paquete.findMany)
 
 const datosValidos = {
   nombre: 'Escapada a Madrid',
@@ -56,5 +61,26 @@ describe('registrarPaquete', () => {
     expect(argumentos.data.vueloIdaId).toBe(1)
     expect(argumentos.data.vueloVueltaId).toBe(2)
     expect(argumentos.data.agencia).toEqual({ connect: { id: agenciaId } })
+  })
+})
+
+describe('obtenerCatalogoDePaquetes', () => {
+  beforeEach(() => {
+    buscarPaquetes.mockReset()
+  })
+
+  it('devuelve los paquetes de todas las agencias con el nombre de cada agencia', async () => {
+    const agenciaId = 'ag-1'
+    buscarPaquetes.mockResolvedValue([
+      { id: 'p-1', ...datosValidos, agenciaId, agencia: { id: agenciaId, nombre: 'Turismo Sur' } },
+    ])
+
+    const catalogo = await obtenerCatalogoDePaquetes()
+
+    expect(catalogo).toHaveLength(1)
+    expect(catalogo[0].agencia).toEqual({ id: agenciaId, nombre: 'Turismo Sur' })
+    expect(buscarPaquetes).toHaveBeenCalledWith({
+      include: { agencia: { select: { id: true, nombre: true } } },
+    })
   })
 })
