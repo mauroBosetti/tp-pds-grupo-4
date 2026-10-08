@@ -16,6 +16,7 @@ export const pool = new Pool({ connectionString });
 export const app = createApp(pool);
 
 BeforeAll(async function () {
+    await pool.query("DROP TABLE IF EXISTS venta_vuelos, ventas, vuelos CASCADE");
     // Única fuente de verdad del esquema: db/schema.sql (el mismo que usa la app real).
     const schema = readFileSync(join(__dirname, "../../src/db/script.sql"), "utf-8");
     await pool.query(schema);

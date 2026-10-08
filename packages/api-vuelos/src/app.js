@@ -1,6 +1,7 @@
 import express, {json} from "express";
 import cors from "cors";
 import {setParams} from './utils.js'
+import {registrarVenta, VentaError} from "./ventas.js";
 
 /**
  * Crea la app de Express recibiendo el pool por parámetro (inyección de dependencia).
@@ -41,42 +42,24 @@ export function createApp(pool) {
         }
     });
 
+    /**
+     * POST /api/venta
+     * Body: { "ids_vuelo": [idVuelo1, idVuelo2], "pasajero": "Nombre" }
+     * 200 -> venta registrada (ambos vuelos descontados)
+     * 400 -> pedido inválido | 404 -> vuelo inexistente | 409 -> vuelo sin disponibilidad
+     */
     app.post("/api/venta", async (req, res) => {
-        const {id_vuelo, pasajero} = req.body;
-
-        const client = await pool.connect();
+        const {ids_vuelo, pasajero} = req.body ?? {};
 
         try {
-            await client.query("BEGIN");
-
-            const result = await client.query(
-                `UPDATE vuelos
-                 SET disponibilidad = disponibilidad - 1
-                 WHERE id_vuelo = $1
-                   AND disponibilidad > 0 RETURNING *`,
-                [id_vuelo]
-            );
-
-            if (result.rowCount === 0) {
-                await client.query("ROLLBACK");
-                return res.status(400).json({error: "Vuelo sin disponibilidad o inexistente"});
-            }
-
-            await client.query(
-                `INSERT INTO ventas (id_vuelo, nombre_pasajero, fecha_compra)
-                 VALUES ($1, $2, NOW())`,
-                [id_vuelo, pasajero]
-            );
-
-            await client.query("COMMIT");
-
-            res.json({id_vuelo, pasajero});
+            const venta = await registrarVenta(pool, ids_vuelo, pasajero);
+            res.json(venta);
         } catch (err) {
-            await client.query("ROLLBACK");
+            if (err instanceof VentaError) {
+                return res.status(err.status).json({error: err.message});
+            }
             console.error(err);
             res.status(500).json({error: "Error registrando la venta"});
-        } finally {
-            client.release();
         }
     });
 

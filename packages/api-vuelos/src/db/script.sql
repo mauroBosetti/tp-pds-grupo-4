@@ -5,14 +5,20 @@ CREATE TABLE IF NOT EXISTS vuelos (
     destino VARCHAR(255) NOT NULL,
     fecha TIMESTAMP NOT NULL,
     capacidad INT NOT NULL,
-    disponibilidad INT NOT NULL
+    disponibilidad INT NOT NULL,
+    CONSTRAINT vuelos_disponibilidad_valida CHECK (disponibilidad >= 0 AND disponibilidad <= capacidad)
 );
 
 CREATE TABLE IF NOT EXISTS ventas (
     id_venta SERIAL PRIMARY KEY,
-    id_vuelo INT NOT NULL REFERENCES vuelos(id_vuelo),
     nombre_pasajero TEXT NOT NULL,
     fecha_compra TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS venta_vuelos (
+    id_venta INT NOT NULL REFERENCES ventas(id_venta) ON DELETE CASCADE,
+    id_vuelo INT NOT NULL REFERENCES vuelos(id_vuelo),
+    PRIMARY KEY (id_venta, id_vuelo)
 );
 
 INSERT INTO vuelos (aerolinea, origen, destino, fecha, capacidad, disponibilidad) VALUES
