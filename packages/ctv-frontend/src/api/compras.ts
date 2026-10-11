@@ -1,4 +1,5 @@
 import { leerTokenUsuario } from '@/auth/tokenUsuario'
+import type { Opinion } from './opiniones'
 import { SinAutorizacion, type PaqueteDeCatalogo } from './paquetes'
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
@@ -7,6 +8,7 @@ export interface Compra {
   id: string
   fecha: string
   paquete: PaqueteDeCatalogo
+  opinion: Opinion | null
 }
 
 export async function listarMisCompras(): Promise<Compra[]> {

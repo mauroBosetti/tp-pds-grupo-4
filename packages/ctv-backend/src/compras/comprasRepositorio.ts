@@ -16,3 +16,8 @@ export function buscarComprasDeCliente(usuarioClienteId: string) {
     include: { paquete: { include: { agencia: { select: { id: true, nombre: true } } } } },
   })
 }
+
+export async function clienteComproPaquete(usuarioClienteId: string, paqueteId: string) {
+  const cantidad = await cliente.compra.count({ where: { usuarioClienteId, paqueteId } })
+  return cantidad > 0
+}

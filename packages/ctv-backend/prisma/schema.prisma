@@ -37,7 +37,8 @@ model Paquete {
   agenciaId     String  @map("agencia_id") @db.Uuid
   agencia       Agencia @relation(fields: [agenciaId], references: [id])
 
-  compras Compra[]
+  compras   Compra[]
+  opiniones Opinion[]
 
   @@map("paquete")
 }
@@ -80,7 +81,8 @@ model UsuarioCliente {
   cuentaId String @unique @map("cuenta_id") @db.Uuid
   cuenta   Cuenta @relation(fields: [cuentaId], references: [id])
 
-  compras Compra[]
+  compras   Compra[]
+  opiniones Opinion[]
 
   @@map("usuario_cliente")
 }
@@ -94,4 +96,17 @@ model Compra {
   paquete          Paquete        @relation(fields: [paqueteId], references: [id])
 
   @@map("compra")
+}
+
+model Opinion {
+  usuarioClienteId String         @map("usuario_cliente_id") @db.Uuid
+  usuarioCliente   UsuarioCliente @relation(fields: [usuarioClienteId], references: [id])
+  paqueteId        String         @map("paquete_id") @db.Uuid
+  paquete          Paquete        @relation(fields: [paqueteId], references: [id])
+  favorito         Boolean        @default(false)
+  comentario       String?
+  puntaje          Int?
+
+  @@id([usuarioClienteId, paqueteId])
+  @@map("opinion")
 }
