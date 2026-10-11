@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cliente } from '../db/cliente.js'
+import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
   DatosDePaqueteInvalidos,
+  PaqueteInexistente,
+  comprarPaquete,
   registrarPaquete,
   obtenerCatalogoDePaquetes,
 } from './paquetesServicio.js'
 
 vi.mock('../db/cliente.js', () => ({
   cliente: {
-    paquete: { create: vi.fn(), findMany: vi.fn() },
+    paquete: { create: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
   },
 }))
 
+vi.mock('../vuelos/clienteVuelos.js', () => ({ venderVuelos: vi.fn() }))
+
 const crearPaquete = vi.mocked(cliente.paquete.create)
 const buscarPaquetes = vi.mocked(cliente.paquete.findMany)
+const buscarPaquete = vi.mocked(cliente.paquete.findUnique)
+const vender = vi.mocked(venderVuelos)
 
 const datosValidos = {
   nombre: 'Escapada a Madrid',
@@ -82,5 +89,29 @@ describe('obtenerCatalogoDePaquetes', () => {
     expect(buscarPaquetes).toHaveBeenCalledWith({
       include: { agencia: { select: { id: true, nombre: true } } },
     })
+  })
+})
+
+describe('comprarPaquete', () => {
+  beforeEach(() => {
+    buscarPaquete.mockReset()
+    vender.mockReset()
+  })
+
+  it('vende los vuelos de ida y vuelta del paquete al pasajero', async () => {
+    buscarPaquete.mockResolvedValue({ id: 'p-1', ...datosValidos, agenciaId: 'ag-1' })
+    vender.mockResolvedValue({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
+
+    const venta = await comprarPaquete('p-1', 'Clara')
+
+    expect(vender).toHaveBeenCalledWith([1, 2], 'Clara')
+    expect(venta.id_venta).toBe(7)
+  })
+
+  it('falla sin vender nada cuando el paquete no existe', async () => {
+    buscarPaquete.mockResolvedValue(null)
+
+    await expect(comprarPaquete('inexistente', 'Clara')).rejects.toBeInstanceOf(PaqueteInexistente)
+    expect(vender).not.toHaveBeenCalled()
   })
 })

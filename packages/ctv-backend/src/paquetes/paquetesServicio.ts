@@ -1,4 +1,16 @@
-import { crearPaquete, buscarPaquetesDeAgencia, buscarTodosLosPaquetes } from './paquetesRepositorio.js'
+import { venderVuelos } from '../vuelos/clienteVuelos.js'
+import {
+  crearPaquete,
+  buscarPaquetesDeAgencia,
+  buscarTodosLosPaquetes,
+  buscarPaquetePorId,
+} from './paquetesRepositorio.js'
+
+export class PaqueteInexistente extends Error {
+  constructor() {
+    super('El paquete no existe')
+  }
+}
 
 export class DatosDePaqueteInvalidos extends Error {
   constructor() {
@@ -51,4 +63,12 @@ export function obtenerPaquetesDeAgencia(agenciaId: string) {
 
 export function obtenerCatalogoDePaquetes() {
   return buscarTodosLosPaquetes()
+}
+
+export async function comprarPaquete(paqueteId: string, pasajero: string) {
+  const paquete = await buscarPaquetePorId(paqueteId)
+  if (!paquete) {
+    throw new PaqueteInexistente()
+  }
+  return venderVuelos([paquete.vueloIdaId, paquete.vueloVueltaId], pasajero)
 }

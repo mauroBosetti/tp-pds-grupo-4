@@ -95,3 +95,24 @@ export async function crearPaquete(datos: DatosNuevoPaquete): Promise<Paquete> {
   }
   return respuesta.json()
 }
+
+export interface VentaRealizada {
+  id_venta: number
+  pasajero: string
+  ids_vuelo: number[]
+}
+
+export async function comprarPaquete(paqueteId: string): Promise<VentaRealizada> {
+  const respuesta = await fetch(`${API_URL}/api/package/${paqueteId}/comprar`, {
+    method: 'POST',
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    const { error } = await respuesta.json().catch(() => ({ error: undefined }))
+    throw new Error(error ?? 'No se pudo completar la compra')
+  }
+  return respuesta.json()
+}

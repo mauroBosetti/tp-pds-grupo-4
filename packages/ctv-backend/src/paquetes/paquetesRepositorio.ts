@@ -26,3 +26,7 @@ export function buscarTodosLosPaquetes() {
     include: { agencia: { select: { id: true, nombre: true } } },
   })
 }
+
+export function buscarPaquetePorId(id: string) {
+  return cliente.paquete.findUnique({ where: { id } })
+}

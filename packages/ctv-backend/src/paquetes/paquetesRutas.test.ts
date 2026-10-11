@@ -2,11 +2,13 @@ import express from 'express'
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
-import { buscarVuelos } from '../vuelos/clienteVuelos.js'
+import { ApiVuelosNoDisponible, buscarVuelos, VentaRechazada } from '../vuelos/clienteVuelos.js'
 import {
   registrarPaquete,
   obtenerPaquetesDeAgencia,
   obtenerCatalogoDePaquetes,
+  comprarPaquete,
+  PaqueteInexistente,
 } from './paquetesServicio.js'
 import { packageRouter } from './paquetesRutas.js'
 
@@ -17,6 +19,7 @@ vi.mock('./paquetesServicio.js', async (importarReal) => {
     registrarPaquete: vi.fn(),
     obtenerPaquetesDeAgencia: vi.fn(),
     obtenerCatalogoDePaquetes: vi.fn(),
+    comprarPaquete: vi.fn(),
   }
 })
 
@@ -29,6 +32,7 @@ const registrar = vi.mocked(registrarPaquete)
 const listar = vi.mocked(obtenerPaquetesDeAgencia)
 const listarCatalogo = vi.mocked(obtenerCatalogoDePaquetes)
 const buscar = vi.mocked(buscarVuelos)
+const comprar = vi.mocked(comprarPaquete)
 
 function crearApp() {
   const app = express()
@@ -44,6 +48,7 @@ const tokenAgencia = firmarToken({
   nombre: 'Bruno',
   agenciaId
 })
+const tokenCliente = firmarToken({ sub: 'cuenta-3', rol: 'cliente', nombre: 'Clara' })
 const tokenAdmin = firmarToken({ sub: 'cuenta-2', rol: 'administrador', nombre: 'Ada' })
 
 const paqueteValido = {
@@ -199,5 +204,68 @@ describe('GET /api/package/vuelos', () => {
     expect(respuesta.status).toBe(200)
     expect(respuesta.body).toHaveLength(1)
     expect(buscar).toHaveBeenCalledWith('Buenos Aires', 'Madrid')
+  })
+})
+
+describe('POST /api/package/:id/comprar', () => {
+  beforeEach(() => {
+    comprar.mockReset()
+  })
+
+  function comprarComoCliente() {
+    return request(crearApp())
+      .post('/api/package/p-1/comprar')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+  }
+
+  it('responde 401 sin token', async () => {
+    const respuesta = await request(crearApp()).post('/api/package/p-1/comprar')
+
+    expect(respuesta.status).toBe(401)
+    expect(comprar).not.toHaveBeenCalled()
+  })
+
+  it('responde 401 con un token de agencia', async () => {
+    const respuesta = await request(crearApp())
+      .post('/api/package/p-1/comprar')
+      .set('Authorization', `Bearer ${tokenAgencia}`)
+
+    expect(respuesta.status).toBe(401)
+    expect(comprar).not.toHaveBeenCalled()
+  })
+
+  it('registra la compra a nombre del cliente del token', async () => {
+    comprar.mockResolvedValue({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
+
+    const respuesta = await comprarComoCliente()
+
+    expect(respuesta.status).toBe(201)
+    expect(respuesta.body).toEqual({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
+    expect(comprar).toHaveBeenCalledWith('p-1', 'Clara')
+  })
+
+  it('responde 404 cuando el paquete no existe', async () => {
+    comprar.mockRejectedValue(new PaqueteInexistente())
+
+    const respuesta = await comprarComoCliente()
+
+    expect(respuesta.status).toBe(404)
+  })
+
+  it('responde 409 con el motivo cuando un vuelo no tiene disponibilidad', async () => {
+    comprar.mockRejectedValue(new VentaRechazada(409, 'El vuelo 2 no tiene disponibilidad'))
+
+    const respuesta = await comprarComoCliente()
+
+    expect(respuesta.status).toBe(409)
+    expect(respuesta.body).toEqual({ error: 'El vuelo 2 no tiene disponibilidad' })
+  })
+
+  it('responde 502 cuando la API de vuelos no está disponible', async () => {
+    comprar.mockRejectedValue(new ApiVuelosNoDisponible())
+
+    const respuesta = await comprarComoCliente()
+
+    expect(respuesta.status).toBe(502)
   })
 })
