@@ -51,7 +51,7 @@ function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: Propiedade
 }
 
 export default function Catalogo() {
-  const { usuario, cerrarSesion } = useAuthUsuario()
+  const { cerrarSesion } = useAuthUsuario()
   const navegar = useNavigate()
   const [paquetes, setPaquetes] = useState<PaqueteDeCatalogo[] | null>(null)
   const [error, setError] = useState('')
@@ -94,11 +94,11 @@ export default function Catalogo() {
   }, [])
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
+    <main className="flex flex-1 items-start justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-4xl">
         <CardHeader>
-          <CardTitle>Hola{usuario ? `, ${usuario.nombre}` : ''}</CardTitle>
-          <CardDescription>Catálogo de paquetes disponibles</CardDescription>
+          <CardTitle>Catálogo de paquetes</CardTitle>
+          <CardDescription>Elegí un paquete para comprar sus vuelos de ida y vuelta</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {error && (
@@ -120,9 +120,6 @@ export default function Catalogo() {
               alComprar={comprar}
             />
           )}
-          <Button type="button" variant="ghost" onClick={salir}>
-            Cerrar sesión
-          </Button>
         </CardContent>
       </Card>
     </main>

@@ -3,6 +3,7 @@ import { AuthAdministradorProvider } from './auth/AuthAdministradorContext'
 import { AuthUsuarioProvider } from './auth/AuthUsuarioContext'
 import RutaAdministrador from './auth/RutaAdministrador'
 import RutaUsuario from './auth/RutaUsuario'
+import LayoutUsuario from './auth/LayoutUsuario'
 import LoginAdministrador from './paginas/LoginAdministrador'
 import LoginUsuario from './paginas/LoginUsuario'
 import Catalogo from './paginas/Catalogo'
@@ -25,9 +26,11 @@ export default function App() {
             <Route path="/login" element={<LoginUsuario />} />
             <Route path="/registro" element={<Navigate to="/login?modo=registro" replace />} />
             <Route element={<RutaUsuario />}>
-              <Route path="/agencia" element={<AgenciaHome />} />
-              <Route path="/agencia/paquetes/nuevo" element={<CrearPaquete />} />
-              <Route path="/catalogo" element={<Catalogo />} />
+              <Route element={<LayoutUsuario />}>
+                <Route path="/agencia" element={<AgenciaHome />} />
+                <Route path="/agencia/paquetes/nuevo" element={<CrearPaquete />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+              </Route>
             </Route>
             <Route path="/agencias/:id" element={<DetalleAgencia />} />
           </Routes>

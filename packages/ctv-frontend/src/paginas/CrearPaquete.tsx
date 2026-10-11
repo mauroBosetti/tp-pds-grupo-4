@@ -124,7 +124,7 @@ export default function CrearPaquete() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <main className="flex flex-1 items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Crear paquete</CardTitle>

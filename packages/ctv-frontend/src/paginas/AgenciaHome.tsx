@@ -35,7 +35,7 @@ function ListaDePaquetes({ paquetes }: { paquetes: Paquete[] }) {
 }
 
 export default function AgenciaHome() {
-  const { usuario, cerrarSesion } = useAuthUsuario()
+  const { cerrarSesion } = useAuthUsuario()
   const navegar = useNavigate()
   const [paquetes, setPaquetes] = useState<Paquete[] | null>(null)
   const [error, setError] = useState('')
@@ -58,12 +58,12 @@ export default function AgenciaHome() {
   }, [])
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
+    <main className="flex flex-1 items-start justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-4xl">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1.5">
-              <CardTitle>Hola{usuario ? `, ${usuario.nombre}` : ''}</CardTitle>
+              <CardTitle>Mis paquetes</CardTitle>
               <CardDescription>Panel de agencia</CardDescription>
             </div>
             <Button
@@ -83,9 +83,6 @@ export default function AgenciaHome() {
           ) : (
             <ListaDePaquetes paquetes={paquetes} />
           )}
-          <Button type="button" variant="ghost" onClick={salir}>
-            Cerrar sesión
-          </Button>
         </CardContent>
       </Card>
     </main>
