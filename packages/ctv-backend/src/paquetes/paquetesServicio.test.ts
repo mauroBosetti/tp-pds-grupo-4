@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cliente } from '../db/cliente.js'
 import { crearCompra } from '../compras/comprasRepositorio.js'
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
   DatosDePaqueteInvalidos,
-  ClienteInexistente,
   PaqueteInexistente,
   comprarPaquete,
   registrarPaquete,

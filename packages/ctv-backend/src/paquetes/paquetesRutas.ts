@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { requiereAgencia } from '../auth/requiereAgencia.js'
 import { requiereCliente } from '../auth/requiereCliente.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { requiereUsuario } from '../auth/requiereUsuario.js'
 import { buscarVuelos, ApiVuelosNoDisponible, VentaRechazada } from '../vuelos/clienteVuelos.js'
 import {
@@ -10,7 +11,6 @@ import {
   comprarPaquete,
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
-  ClienteInexistente,
 } from './paquetesServicio.js'
 
 const packageRouter: Router = Router()

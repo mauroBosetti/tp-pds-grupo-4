@@ -1,0 +1,76 @@
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import MisCompras from './MisCompras'
+import { AuthUsuarioProvider } from '@/auth/AuthUsuarioContext'
+import * as apiCompras from '@/api/compras'
+import { SinAutorizacion } from '@/api/paquetes'
+
+function renderizar() {
+  return render(
+    <AuthUsuarioProvider>
+      <MemoryRouter initialEntries={['/compras']}>
+        <Routes>
+          <Route path="/compras" element={<MisCompras />} />
+          <Route path="/login" element={<p>Pantalla de login</p>} />
+        </Routes>
+      </MemoryRouter>
+    </AuthUsuarioProvider>,
+  )
+}
+
+const compra: apiCompras.Compra = {
+  id: 'c-1',
+  fecha: '2026-10-11T06:43:06.212Z',
+  paquete: {
+    id: 'p-1',
+    nombre: 'Escapada a Madrid',
+    precio: 1500,
+    origen: 'Buenos Aires',
+    destino: 'Madrid',
+    vueloIdaId: 1,
+    vueloVueltaId: 2,
+    agenciaId: 'ag-1',
+    agencia: { id: 'ag-1', nombre: 'Turismo Sur' },
+  },
+}
+
+describe('MisCompras', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('muestra los paquetes comprados con su agencia y precio', async () => {
+    vi.spyOn(apiCompras, 'listarMisCompras').mockResolvedValue([compra])
+
+    renderizar()
+
+    expect(await screen.findByText('Escapada a Madrid')).toBeInTheDocument()
+    expect(screen.getByText('Turismo Sur')).toBeInTheDocument()
+    expect(screen.getByText('$1500')).toBeInTheDocument()
+  })
+
+  it('muestra un mensaje cuando todavía no hay compras', async () => {
+    vi.spyOn(apiCompras, 'listarMisCompras').mockResolvedValue([])
+
+    renderizar()
+
+    expect(await screen.findByText(/todavía no compraste/i)).toBeInTheDocument()
+  })
+
+  it('muestra un error cuando falla la carga', async () => {
+    vi.spyOn(apiCompras, 'listarMisCompras').mockRejectedValue(new Error('falló'))
+
+    renderizar()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudieron cargar tus compras.')
+  })
+
+  it('redirige al login cuando la carga responde 401', async () => {
+    vi.spyOn(apiCompras, 'listarMisCompras').mockRejectedValue(new SinAutorizacion('vencido'))
+
+    renderizar()
+
+    expect(await screen.findByText('Pantalla de login')).toBeInTheDocument()
+  })
+})

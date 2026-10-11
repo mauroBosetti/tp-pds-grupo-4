@@ -6,9 +6,9 @@ import BarraDeNavegacion from './BarraDeNavegacion'
 import { AuthUsuarioProvider } from '@/auth/AuthUsuarioContext'
 import { guardarTokenUsuario, guardarUsuario, leerTokenUsuario } from '@/auth/tokenUsuario'
 
-function renderizarConSesion() {
+function renderizarConSesion(rol: 'cliente' | 'agencia' = 'cliente') {
   guardarTokenUsuario('abc.123')
-  guardarUsuario({ nombre: 'Clara Cliente', email: 'clara@demo.com', rol: 'cliente' })
+  guardarUsuario({ nombre: 'Clara Cliente', email: 'clara@demo.com', rol })
   return render(
     <AuthUsuarioProvider>
       <MemoryRouter initialEntries={['/catalogo']}>
@@ -31,6 +31,19 @@ describe('BarraDeNavegacion', () => {
 
     expect(screen.getByText('Clara Cliente')).toBeInTheDocument()
     expect(screen.getByText('Cliente')).toBeInTheDocument()
+  })
+
+  it('ofrece al cliente ir al catálogo y a sus compras', () => {
+    renderizarConSesion('cliente')
+
+    expect(screen.getByRole('link', { name: 'Catálogo' })).toHaveAttribute('href', '/catalogo')
+    expect(screen.getByRole('link', { name: 'Mis compras' })).toHaveAttribute('href', '/compras')
+  })
+
+  it('no ofrece enlaces de cliente a una agencia', () => {
+    renderizarConSesion('agencia')
+
+    expect(screen.queryByRole('link', { name: 'Mis compras' })).not.toBeInTheDocument()
   })
 
   it('cierra la sesión y vuelve al login', async () => {

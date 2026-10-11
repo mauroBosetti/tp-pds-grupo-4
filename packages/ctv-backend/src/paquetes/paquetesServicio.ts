@@ -1,4 +1,5 @@
 import { crearCompra } from '../compras/comprasRepositorio.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
@@ -11,12 +12,6 @@ import {
 export class PaqueteInexistente extends Error {
   constructor() {
     super('El paquete no existe')
-  }
-}
-
-export class ClienteInexistente extends Error {
-  constructor() {
-    super('El cliente no existe')
   }
 }
 
