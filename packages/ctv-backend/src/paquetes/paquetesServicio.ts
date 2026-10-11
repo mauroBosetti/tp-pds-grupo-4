@@ -1,3 +1,5 @@
+import { crearCompra } from '../compras/comprasRepositorio.js'
+import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
   crearPaquete,
@@ -9,6 +11,12 @@ import {
 export class PaqueteInexistente extends Error {
   constructor() {
     super('El paquete no existe')
+  }
+}
+
+export class ClienteInexistente extends Error {
+  constructor() {
+    super('El cliente no existe')
   }
 }
 
@@ -65,10 +73,19 @@ export function obtenerCatalogoDePaquetes() {
   return buscarTodosLosPaquetes()
 }
 
-export async function comprarPaquete(paqueteId: string, pasajero: string) {
+export async function comprarPaquete(paqueteId: string, cuentaId: string) {
   const paquete = await buscarPaquetePorId(paqueteId)
   if (!paquete) {
     throw new PaqueteInexistente()
   }
-  return venderVuelos([paquete.vueloIdaId, paquete.vueloVueltaId], pasajero)
+  const usuarioCliente = await buscarUsuarioClientePorCuentaId(cuentaId)
+  if (!usuarioCliente) {
+    throw new ClienteInexistente()
+  }
+  const venta = await venderVuelos(
+    [paquete.vueloIdaId, paquete.vueloVueltaId],
+    usuarioCliente.nombre,
+  )
+  await crearCompra({ usuarioClienteId: usuarioCliente.id, paqueteId })
+  return venta
 }

@@ -10,6 +10,7 @@ import {
   comprarPaquete,
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
+  ClienteInexistente,
 } from './paquetesServicio.js'
 
 const packageRouter: Router = Router()
@@ -66,16 +67,16 @@ packageRouter.post('/', requiereAgencia, async (req, res) => {
 })
 
 packageRouter.post('/:id/comprar', requiereCliente, async (req, res) => {
-  const pasajero = req.usuario?.nombre
-  if (!pasajero) {
+  const cuentaId = req.usuario?.sub
+  if (!cuentaId) {
     res.status(401).json({ error: 'No autenticado' })
     return
   }
   try {
-    const venta = await comprarPaquete(String(req.params.id), pasajero)
+    const venta = await comprarPaquete(String(req.params.id), cuentaId)
     res.status(201).json(venta)
   } catch (error) {
-    if (error instanceof PaqueteInexistente) {
+    if (error instanceof PaqueteInexistente || error instanceof ClienteInexistente) {
       res.status(404).json({ error: error.message })
       return
     }

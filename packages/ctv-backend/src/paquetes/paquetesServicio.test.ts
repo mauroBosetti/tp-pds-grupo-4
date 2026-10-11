@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cliente } from '../db/cliente.js'
+import { crearCompra } from '../compras/comprasRepositorio.js'
+import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
   DatosDePaqueteInvalidos,
+  ClienteInexistente,
   PaqueteInexistente,
   comprarPaquete,
   registrarPaquete,
@@ -16,11 +19,17 @@ vi.mock('../db/cliente.js', () => ({
 }))
 
 vi.mock('../vuelos/clienteVuelos.js', () => ({ venderVuelos: vi.fn() }))
+vi.mock('../compras/comprasRepositorio.js', () => ({ crearCompra: vi.fn() }))
+vi.mock('../usuariosCliente/usuariosClienteRepositorio.js', () => ({
+  buscarUsuarioClientePorCuentaId: vi.fn(),
+}))
 
 const crearPaquete = vi.mocked(cliente.paquete.create)
 const buscarPaquetes = vi.mocked(cliente.paquete.findMany)
 const buscarPaquete = vi.mocked(cliente.paquete.findUnique)
 const vender = vi.mocked(venderVuelos)
+const registrarCompra = vi.mocked(crearCompra)
+const buscarCliente = vi.mocked(buscarUsuarioClientePorCuentaId)
 
 const datosValidos = {
   nombre: 'Escapada a Madrid',
@@ -93,25 +102,51 @@ describe('obtenerCatalogoDePaquetes', () => {
 })
 
 describe('comprarPaquete', () => {
+  const paqueteExistente = { id: 'p-1', ...datosValidos, agenciaId: 'ag-1' }
+  const usuarioCliente = { id: 'u-1', nombre: 'Clara', cuentaId: 'cuenta-3' }
+
   beforeEach(() => {
     buscarPaquete.mockReset()
     vender.mockReset()
+    registrarCompra.mockReset()
+    buscarCliente.mockReset()
   })
 
-  it('vende los vuelos de ida y vuelta del paquete al pasajero', async () => {
-    buscarPaquete.mockResolvedValue({ id: 'p-1', ...datosValidos, agenciaId: 'ag-1' })
+  it('vende los vuelos del paquete al cliente y registra la compra', async () => {
+    buscarPaquete.mockResolvedValue(paqueteExistente)
+    buscarCliente.mockResolvedValue(usuarioCliente)
     vender.mockResolvedValue({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
 
-    const venta = await comprarPaquete('p-1', 'Clara')
+    const venta = await comprarPaquete('p-1', 'cuenta-3')
 
     expect(vender).toHaveBeenCalledWith([1, 2], 'Clara')
+    expect(registrarCompra).toHaveBeenCalledWith({ usuarioClienteId: 'u-1', paqueteId: 'p-1' })
     expect(venta.id_venta).toBe(7)
+  })
+
+  it('no registra la compra cuando la venta de vuelos es rechazada', async () => {
+    buscarPaquete.mockResolvedValue(paqueteExistente)
+    buscarCliente.mockResolvedValue(usuarioCliente)
+    vender.mockRejectedValue(new Error('sin disponibilidad'))
+
+    await expect(comprarPaquete('p-1', 'cuenta-3')).rejects.toThrow('sin disponibilidad')
+    expect(registrarCompra).not.toHaveBeenCalled()
   })
 
   it('falla sin vender nada cuando el paquete no existe', async () => {
     buscarPaquete.mockResolvedValue(null)
 
-    await expect(comprarPaquete('inexistente', 'Clara')).rejects.toBeInstanceOf(PaqueteInexistente)
+    await expect(comprarPaquete('inexistente', 'cuenta-3')).rejects.toBeInstanceOf(
+      PaqueteInexistente,
+    )
+    expect(vender).not.toHaveBeenCalled()
+  })
+
+  it('falla sin vender nada cuando la cuenta no tiene un cliente', async () => {
+    buscarPaquete.mockResolvedValue(paqueteExistente)
+    buscarCliente.mockResolvedValue(null)
+
+    await expect(comprarPaquete('p-1', 'cuenta-3')).rejects.toBeInstanceOf(ClienteInexistente)
     expect(vender).not.toHaveBeenCalled()
   })
 })

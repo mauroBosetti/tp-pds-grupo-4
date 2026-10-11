@@ -234,14 +234,14 @@ describe('POST /api/package/:id/comprar', () => {
     expect(comprar).not.toHaveBeenCalled()
   })
 
-  it('registra la compra a nombre del cliente del token', async () => {
+  it('registra la compra de la cuenta del token', async () => {
     comprar.mockResolvedValue({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
 
     const respuesta = await comprarComoCliente()
 
     expect(respuesta.status).toBe(201)
     expect(respuesta.body).toEqual({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
-    expect(comprar).toHaveBeenCalledWith('p-1', 'Clara')
+    expect(comprar).toHaveBeenCalledWith('p-1', 'cuenta-3')
   })
 
   it('responde 404 cuando el paquete no existe', async () => {

@@ -37,6 +37,8 @@ model Paquete {
   agenciaId     String  @map("agencia_id") @db.Uuid
   agencia       Agencia @relation(fields: [agenciaId], references: [id])
 
+  compras Compra[]
+
   @@map("paquete")
 }
 
@@ -78,5 +80,18 @@ model UsuarioCliente {
   cuentaId String @unique @map("cuenta_id") @db.Uuid
   cuenta   Cuenta @relation(fields: [cuentaId], references: [id])
 
+  compras Compra[]
+
   @@map("usuario_cliente")
+}
+
+model Compra {
+  id               String         @id @default(uuid()) @db.Uuid
+  fecha            DateTime       @default(now())
+  usuarioClienteId String         @map("usuario_cliente_id") @db.Uuid
+  usuarioCliente   UsuarioCliente @relation(fields: [usuarioClienteId], references: [id])
+  paqueteId        String         @map("paquete_id") @db.Uuid
+  paquete          Paquete        @relation(fields: [paqueteId], references: [id])
+
+  @@map("compra")
 }
