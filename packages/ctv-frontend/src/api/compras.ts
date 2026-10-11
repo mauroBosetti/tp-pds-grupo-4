@@ -1,13 +1,13 @@
 import { leerTokenUsuario } from '@/auth/tokenUsuario'
 import type { Opinion } from './opiniones'
-import { SinAutorizacion, type PaqueteDeCatalogo } from './paquetes'
+import { SinAutorizacion, type PaqueteConAgencia } from './paquetes'
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 export interface Compra {
   id: string
   fecha: string
-  paquete: PaqueteDeCatalogo
+  paquete: PaqueteConAgencia
   opinion: Opinion | null
 }
 

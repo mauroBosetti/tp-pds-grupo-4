@@ -27,8 +27,25 @@ export interface Paquete extends DatosNuevoPaquete {
   agenciaId: string
 }
 
-export interface PaqueteDeCatalogo extends Paquete {
+export interface PaqueteConAgencia extends Paquete {
   agencia: { id: string; nombre: string }
+}
+
+export interface ResumenDePuntajes {
+  puntajePromedio: number | null
+  cantidadDePuntajes: number
+}
+
+export interface PaqueteDeCatalogo extends PaqueteConAgencia, ResumenDePuntajes {}
+
+export interface ComentarioDePaquete {
+  autor: string
+  puntaje: number | null
+  comentario: string
+}
+
+export interface DetalleDePaquete extends PaqueteDeCatalogo {
+  comentarios: ComentarioDePaquete[]
 }
 
 export class SinAutorizacion extends Error {}
@@ -113,6 +130,19 @@ export async function comprarPaquete(paqueteId: string): Promise<VentaRealizada>
   if (!respuesta.ok) {
     const { error } = await respuesta.json().catch(() => ({ error: undefined }))
     throw new Error(error ?? 'No se pudo completar la compra')
+  }
+  return respuesta.json()
+}
+
+export async function obtenerDetalleDePaquete(paqueteId: string): Promise<DetalleDePaquete> {
+  const respuesta = await fetch(`${API_URL}/api/package/${paqueteId}`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudo obtener el paquete')
   }
   return respuesta.json()
 }

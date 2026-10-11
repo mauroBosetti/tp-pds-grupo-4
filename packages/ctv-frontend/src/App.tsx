@@ -7,6 +7,7 @@ import LayoutUsuario from './auth/LayoutUsuario'
 import LoginAdministrador from './paginas/LoginAdministrador'
 import LoginUsuario from './paginas/LoginUsuario'
 import Catalogo from './paginas/Catalogo'
+import DetallePaquete from './paginas/DetallePaquete'
 import MisCompras from './paginas/MisCompras'
 import AgenciaHome from './paginas/AgenciaHome'
 import CrearPaquete from './paginas/CrearPaquete'
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="/agencia" element={<AgenciaHome />} />
                 <Route path="/agencia/paquetes/nuevo" element={<CrearPaquete />} />
                 <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/paquetes/:id" element={<DetallePaquete />} />
                 <Route path="/compras" element={<MisCompras />} />
               </Route>
             </Route>

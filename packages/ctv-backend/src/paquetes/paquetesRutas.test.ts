@@ -8,6 +8,7 @@ import {
   obtenerPaquetesDeAgencia,
   obtenerCatalogoDePaquetes,
   comprarPaquete,
+  obtenerDetalleDePaquete,
   PaqueteInexistente,
 } from './paquetesServicio.js'
 import { packageRouter } from './paquetesRutas.js'
@@ -20,6 +21,7 @@ vi.mock('./paquetesServicio.js', async (importarReal) => {
     obtenerPaquetesDeAgencia: vi.fn(),
     obtenerCatalogoDePaquetes: vi.fn(),
     comprarPaquete: vi.fn(),
+    obtenerDetalleDePaquete: vi.fn(),
   }
 })
 
@@ -33,6 +35,7 @@ const listar = vi.mocked(obtenerPaquetesDeAgencia)
 const listarCatalogo = vi.mocked(obtenerCatalogoDePaquetes)
 const buscar = vi.mocked(buscarVuelos)
 const comprar = vi.mocked(comprarPaquete)
+const obtenerDetalle = vi.mocked(obtenerDetalleDePaquete)
 
 function crearApp() {
   const app = express()
@@ -267,5 +270,53 @@ describe('POST /api/package/:id/comprar', () => {
     const respuesta = await comprarComoCliente()
 
     expect(respuesta.status).toBe(502)
+  })
+})
+
+describe('GET /api/package/:id', () => {
+  beforeEach(() => {
+    obtenerDetalle.mockReset()
+  })
+
+  it('responde 401 sin token', async () => {
+    const respuesta = await request(crearApp()).get('/api/package/p-1')
+
+    expect(respuesta.status).toBe(401)
+    expect(obtenerDetalle).not.toHaveBeenCalled()
+  })
+
+  it('devuelve el detalle del paquete con un token de cliente', async () => {
+    obtenerDetalle.mockResolvedValue({ id: 'p-1', nombre: 'Escapada a Madrid' } as Awaited<
+      ReturnType<typeof obtenerDetalleDePaquete>
+    >)
+
+    const respuesta = await request(crearApp())
+      .get('/api/package/p-1')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body.nombre).toBe('Escapada a Madrid')
+    expect(obtenerDetalle).toHaveBeenCalledWith('p-1')
+  })
+
+  it('responde 404 cuando el paquete no existe', async () => {
+    obtenerDetalle.mockRejectedValue(new PaqueteInexistente())
+
+    const respuesta = await request(crearApp())
+      .get('/api/package/x')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+
+    expect(respuesta.status).toBe(404)
+  })
+
+  it('no pisa las rutas fijas /catalogo y /vuelos', async () => {
+    listarCatalogo.mockResolvedValue([])
+
+    const respuesta = await request(crearApp())
+      .get('/api/package/catalogo')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(obtenerDetalle).not.toHaveBeenCalled()
   })
 })

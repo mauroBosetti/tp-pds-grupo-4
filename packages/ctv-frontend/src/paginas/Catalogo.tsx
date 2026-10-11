@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { comprarPaquete, listarCatalogo, SinAutorizacion, type PaqueteDeCatalogo } from '@/api/paquetes'
 import { useAuthUsuario } from '@/auth/AuthUsuarioContext'
+import PuntajePromedio from '@/components/PuntajePromedio'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -9,9 +10,15 @@ interface PropiedadesListaDePaquetes {
   paquetes: PaqueteDeCatalogo[]
   paqueteComprandoId: string | null
   alComprar: (paquete: PaqueteDeCatalogo) => void
+  alVerMas: (paquete: PaqueteDeCatalogo) => void
 }
 
-function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: PropiedadesListaDePaquetes) {
+function ListaDePaquetes({
+  paquetes,
+  paqueteComprandoId,
+  alComprar,
+  alVerMas,
+}: PropiedadesListaDePaquetes) {
   if (paquetes.length === 0) {
     return (
       <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground text-center">
@@ -32,17 +39,26 @@ function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: Propiedade
               {paquete.origen} → {paquete.destino}
             </span>
             <span className="text-xs text-muted-foreground">{paquete.agencia.nombre}</span>
+            <PuntajePromedio
+              puntajePromedio={paquete.puntajePromedio}
+              cantidadDePuntajes={paquete.cantidadDePuntajes}
+            />
           </span>
           <span className="flex flex-col items-end gap-2">
             <span className="font-medium">${paquete.precio}</span>
-            <Button
-              type="button"
-              size="sm"
-              disabled={paqueteComprandoId !== null}
-              onClick={() => alComprar(paquete)}
-            >
-              {paqueteComprandoId === paquete.id ? 'Comprando...' : 'Comprar'}
-            </Button>
+            <span className="flex gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => alVerMas(paquete)}>
+                Ver más
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                  disabled={paqueteComprandoId !== null}
+                onClick={() => alComprar(paquete)}
+              >
+                {paqueteComprandoId === paquete.id ? 'Comprando...' : 'Comprar'}
+              </Button>
+            </span>
           </span>
         </li>
       ))}
@@ -118,6 +134,7 @@ export default function Catalogo() {
               paquetes={paquetes}
               paqueteComprandoId={paqueteComprandoId}
               alComprar={comprar}
+              alVerMas={(paquete) => navegar(`/paquetes/${paquete.id}`)}
             />
           )}
         </CardContent>

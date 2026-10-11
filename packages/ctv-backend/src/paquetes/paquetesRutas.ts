@@ -9,6 +9,7 @@ import {
   obtenerPaquetesDeAgencia,
   obtenerCatalogoDePaquetes,
   comprarPaquete,
+  obtenerDetalleDePaquete,
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
 } from './paquetesServicio.js'
@@ -42,6 +43,18 @@ packageRouter.get('/vuelos', requiereAgencia, async (req, res) => {
   } catch (error) {
     if (error instanceof ApiVuelosNoDisponible) {
       res.status(502).json({ error: error.message })
+      return
+    }
+    throw error
+  }
+})
+
+packageRouter.get('/:id', requiereUsuario, async (req, res) => {
+  try {
+    res.json(await obtenerDetalleDePaquete(String(req.params.id)))
+  } catch (error) {
+    if (error instanceof PaqueteInexistente) {
+      res.status(404).json({ error: error.message })
       return
     }
     throw error

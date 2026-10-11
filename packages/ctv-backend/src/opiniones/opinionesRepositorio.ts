@@ -18,3 +18,17 @@ export function guardarOpinion({ usuarioClienteId, paqueteId, comentario, puntaj
 export function buscarOpinionesDeCliente(usuarioClienteId: string) {
   return cliente.opinion.findMany({ where: { usuarioClienteId } })
 }
+
+export function buscarPuntajesDeTodosLosPaquetes() {
+  return cliente.opinion.findMany({
+    where: { puntaje: { not: null } },
+    select: { paqueteId: true, puntaje: true },
+  })
+}
+
+export function buscarOpinionesDePaquete(paqueteId: string) {
+  return cliente.opinion.findMany({
+    where: { paqueteId },
+    include: { usuarioCliente: { select: { nombre: true } } },
+  })
+}
