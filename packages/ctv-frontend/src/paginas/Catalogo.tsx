@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listarCatalogo, SinAutorizacion, type PaqueteDeCatalogo } from '@/api/paquetes'
+import { comprarPaquete, listarCatalogo, SinAutorizacion, type PaqueteDeCatalogo } from '@/api/paquetes'
 import { useAuthUsuario } from '@/auth/AuthUsuarioContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-function ListaDePaquetes({ paquetes }: { paquetes: PaqueteDeCatalogo[] }) {
+interface PropiedadesListaDePaquetes {
+  paquetes: PaqueteDeCatalogo[]
+  paqueteComprandoId: string | null
+  alComprar: (paquete: PaqueteDeCatalogo) => void
+}
+
+function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: PropiedadesListaDePaquetes) {
   if (paquetes.length === 0) {
     return (
       <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground text-center">
@@ -27,7 +33,17 @@ function ListaDePaquetes({ paquetes }: { paquetes: PaqueteDeCatalogo[] }) {
             </span>
             <span className="text-xs text-muted-foreground">{paquete.agencia.nombre}</span>
           </span>
-          <span className="font-medium">${paquete.precio}</span>
+          <span className="flex flex-col items-end gap-2">
+            <span className="font-medium">${paquete.precio}</span>
+            <Button
+              type="button"
+              size="sm"
+              disabled={paqueteComprandoId !== null}
+              onClick={() => alComprar(paquete)}
+            >
+              {paqueteComprandoId === paquete.id ? 'Comprando...' : 'Comprar'}
+            </Button>
+          </span>
         </li>
       ))}
     </ul>
@@ -39,10 +55,30 @@ export default function Catalogo() {
   const navegar = useNavigate()
   const [paquetes, setPaquetes] = useState<PaqueteDeCatalogo[] | null>(null)
   const [error, setError] = useState('')
+  const [confirmacion, setConfirmacion] = useState('')
+  const [paqueteComprandoId, setPaqueteComprandoId] = useState<string | null>(null)
 
   function salir() {
     cerrarSesion()
     navegar('/login')
+  }
+
+  async function comprar(paquete: PaqueteDeCatalogo) {
+    setError('')
+    setConfirmacion('')
+    setPaqueteComprandoId(paquete.id)
+    try {
+      await comprarPaquete(paquete.id)
+      setConfirmacion(`¡Compraste "${paquete.nombre}"!`)
+    } catch (fallo) {
+      if (fallo instanceof SinAutorizacion) {
+        salir()
+        return
+      }
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo completar la compra')
+    } finally {
+      setPaqueteComprandoId(null)
+    }
   }
 
   useEffect(() => {
@@ -70,10 +106,19 @@ export default function Catalogo() {
               {error}
             </p>
           )}
+          {confirmacion && (
+            <p role="status" className="text-sm text-green-700">
+              {confirmacion}
+            </p>
+          )}
           {paquetes === null ? (
             <p className="text-sm text-muted-foreground">Cargando catálogo...</p>
           ) : (
-            <ListaDePaquetes paquetes={paquetes} />
+            <ListaDePaquetes
+              paquetes={paquetes}
+              paqueteComprandoId={paqueteComprandoId}
+              alComprar={comprar}
+            />
           )}
           <Button type="button" variant="ghost" onClick={salir}>
             Cerrar sesión

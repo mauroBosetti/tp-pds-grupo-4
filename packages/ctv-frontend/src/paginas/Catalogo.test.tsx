@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Catalogo from './Catalogo'
@@ -89,6 +90,54 @@ describe('Catalogo', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Pantalla de login')).toBeInTheDocument()
+    })
+  })
+
+  describe('al comprar un paquete', () => {
+    async function renderizarConCatalogo() {
+      vi.spyOn(apiPaquetes, 'listarCatalogo').mockResolvedValue(paquetes)
+      renderizar()
+      await screen.findByText('Escapada a Madrid')
+    }
+
+    function botonComprarDe(nombre: string) {
+      const fila = screen.getByText(nombre).closest('li') as HTMLElement
+      return within(fila).getByRole('button', { name: 'Comprar' })
+    }
+
+    it('compra el paquete elegido y confirma la compra', async () => {
+      const comprar = vi
+        .spyOn(apiPaquetes, 'comprarPaquete')
+        .mockResolvedValue({ id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] })
+      await renderizarConCatalogo()
+
+      await userEvent.click(botonComprarDe('Verano en Bariloche'))
+
+      expect(comprar).toHaveBeenCalledWith('p-2')
+      expect(await screen.findByRole('status')).toHaveTextContent('Verano en Bariloche')
+    })
+
+    it('muestra el motivo cuando la compra es rechazada', async () => {
+      vi.spyOn(apiPaquetes, 'comprarPaquete').mockRejectedValue(
+        new Error('El vuelo 2 no tiene disponibilidad'),
+      )
+      await renderizarConCatalogo()
+
+      await userEvent.click(botonComprarDe('Escapada a Madrid'))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'El vuelo 2 no tiene disponibilidad',
+      )
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    })
+
+    it('redirige al login cuando la sesión expiró al comprar', async () => {
+      vi.spyOn(apiPaquetes, 'comprarPaquete').mockRejectedValue(new SinAutorizacion('vencido'))
+      await renderizarConCatalogo()
+
+      await userEvent.click(botonComprarDe('Escapada a Madrid'))
+
+      expect(await screen.findByText('Pantalla de login')).toBeInTheDocument()
     })
   })
 })

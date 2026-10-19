@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buscarVuelos, crearPaquete, listarCatalogo, SinAutorizacion } from './paquetes'
+import { buscarVuelos, comprarPaquete, crearPaquete, listarCatalogo, SinAutorizacion } from './paquetes'
 import { guardarTokenUsuario } from '@/auth/tokenUsuario'
 
 function responderCon(cuerpo: unknown, init: { status?: number } = {}) {
@@ -71,5 +71,35 @@ describe('api de paquetes', () => {
     expect(url).toContain('/api/package/catalogo')
     expect(opciones.headers.Authorization).toBe('Bearer abc.123')
     expect(catalogo[0].agencia.nombre).toBe('Turismo Sur')
+  })
+
+  it('comprarPaquete hace POST al paquete con el token del usuario', async () => {
+    guardarTokenUsuario('abc.123')
+    const venta = { id_venta: 7, pasajero: 'Clara', ids_vuelo: [1, 2] }
+    const fetchFalso = responderCon(venta, { status: 201 })
+    vi.stubGlobal('fetch', fetchFalso)
+
+    const resultado = await comprarPaquete('p-1')
+
+    const [url, opciones] = fetchFalso.mock.calls[0]
+    expect(url).toContain('/api/package/p-1/comprar')
+    expect(opciones.method).toBe('POST')
+    expect(opciones.headers.Authorization).toBe('Bearer abc.123')
+    expect(resultado).toEqual(venta)
+  })
+
+  it('comprarPaquete falla con el motivo que informa el backend', async () => {
+    vi.stubGlobal(
+      'fetch',
+      responderCon({ error: 'El vuelo 2 no tiene disponibilidad' }, { status: 409 }),
+    )
+
+    await expect(comprarPaquete('p-1')).rejects.toThrow('El vuelo 2 no tiene disponibilidad')
+  })
+
+  it('comprarPaquete lanza SinAutorizacion cuando la sesión expiró', async () => {
+    vi.stubGlobal('fetch', responderCon({}, { status: 401 }))
+
+    await expect(comprarPaquete('p-1')).rejects.toBeInstanceOf(SinAutorizacion)
   })
 })

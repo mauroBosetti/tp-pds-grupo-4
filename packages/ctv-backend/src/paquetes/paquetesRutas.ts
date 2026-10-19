@@ -1,12 +1,16 @@
 import { Router } from 'express'
 import { requiereAgencia } from '../auth/requiereAgencia.js'
+import { requiereCliente } from '../auth/requiereCliente.js'
 import { requiereUsuario } from '../auth/requiereUsuario.js'
-import { buscarVuelos, ApiVuelosNoDisponible } from '../vuelos/clienteVuelos.js'
+import { buscarVuelos, ApiVuelosNoDisponible, VentaRechazada } from '../vuelos/clienteVuelos.js'
 import {
   registrarPaquete,
   obtenerPaquetesDeAgencia,
   obtenerCatalogoDePaquetes,
+  comprarPaquete,
   DatosDePaqueteInvalidos,
+  PaqueteInexistente,
+  ClienteInexistente,
 } from './paquetesServicio.js'
 
 const packageRouter: Router = Router()
@@ -56,6 +60,32 @@ packageRouter.post('/', requiereAgencia, async (req, res) => {
   } catch (error) {
     if (error instanceof DatosDePaqueteInvalidos) {
       res.status(400).json({ error: error.message })
+      return
+    }
+    throw error
+  }
+})
+
+packageRouter.post('/:id/comprar', requiereCliente, async (req, res) => {
+  const cuentaId = req.usuario?.sub
+  if (!cuentaId) {
+    res.status(401).json({ error: 'No autenticado' })
+    return
+  }
+  try {
+    const venta = await comprarPaquete(String(req.params.id), cuentaId)
+    res.status(201).json(venta)
+  } catch (error) {
+    if (error instanceof PaqueteInexistente || error instanceof ClienteInexistente) {
+      res.status(404).json({ error: error.message })
+      return
+    }
+    if (error instanceof VentaRechazada) {
+      res.status(error.estado === 409 ? 409 : 400).json({ error: error.message })
+      return
+    }
+    if (error instanceof ApiVuelosNoDisponible) {
+      res.status(502).json({ error: error.message })
       return
     }
     throw error
