@@ -1,9 +1,23 @@
 # TP-PDS-GRUPO-4
 
+## Sonar
+```
+docker compose up sonarqube
+```
+* http://localhost:9000/
+* usr and pass: admin admin
+* projects -> create local project
+* project display name: tp-pds-grupo-4
+* branch: dev -> next
+* follow instance default -> create project
+* locally -> generate -> continue
+```
+npm run sonar -- -Dsonar.token=TOKEN_GENERADO
+```
 ## run full project
 
 ### W/ Docker Compose
-* ```podman compose up```
+* ```docker compose up```
 * ```localhost:8080```
 
 ## api-vuelos

@@ -5,6 +5,9 @@
     "packages/ctv-frontend",
     "packages/ctv-backend"
   ],
+  "scripts": { 
+    "sonar": "sonar-scanner-npm"
+  },
   "dependencies": {
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
@@ -14,5 +17,8 @@
     "esbuild": true,
     "puppeteer": true,
     "prisma": true
+  },
+  "devDependencies": {
+    "@sonar/scan": "^5.0.2"
   }
 }
