@@ -5,6 +5,10 @@
     "packages/ctv-frontend",
     "packages/ctv-backend"
   ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
   "dependencies": {
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
