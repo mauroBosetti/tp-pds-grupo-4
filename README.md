@@ -14,9 +14,7 @@ docker compose up sonarqube
 * para generar coverage
 ``` 
 docker compose up db-vuelos-test
-npm run test:coverage -w api-vuelos
-npm run test:coverage -w ctv-backend
-npm run test:coverage -w ctv-frontend
+npm run test:coverage
 ``` 
 
 ``` 
