@@ -7,7 +7,9 @@
   ],
   "scripts": { 
     "sonar": "sonar-scanner-npm",
-    "test:coverage": "npm run test:coverage -ws --if-present"
+    "test:coverage": "npm run test:coverage -ws --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
   },
   "dependencies": {
     "swagger-ui-express": "^5.0.1",
