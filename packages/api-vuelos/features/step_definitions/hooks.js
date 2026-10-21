@@ -6,11 +6,7 @@ import { dirname, join } from "node:path";
 import { createApp } from "../../src/app.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// Usá una DB separada para tests, nunca la de dev/prod.
-const connectionString =
-    process.env.TEST_DATABASE_URL ||
-    "postgresql://postgres:root@localhost:5432/db_vuelos_test";
+const connectionString = process.env.TEST_DATABASE_URL || "postgresql://vuelos_test:vuelos_test@localhost:5434/vuelos_test";
 
 export const pool = new Pool({ connectionString });
 export const app = createApp(pool);

@@ -11,8 +11,22 @@ docker compose up sonarqube
 * branch: dev -> next
 * follow instance default -> create project
 * locally -> generate -> continue
+* para generar coverage
+``` 
+docker compose up db-vuelos-test
+npm run test:coverage -w api-vuelos
+npm run test:coverage -w ctv-backend
+npm run test:coverage -w ctv-frontend
+``` 
+
+``` 
+bash
+> npm run sonar -- -Dsonar.token=TOKEN_GENERADO
 ```
-npm run sonar -- -Dsonar.token=TOKEN_GENERADO
+``` 
+powershell
+> $env:SONAR_TOKEN="TU_TOKEN"
+> npm run sonar
 ```
 ## run full project
 

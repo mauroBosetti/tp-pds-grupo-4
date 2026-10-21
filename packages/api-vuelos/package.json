@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "test": "cucumber-js",
+    "test:coverage":  "c8 --exclude='features/**' --reporter=lcov cucumber-js",
     "start": "node src/server.js",
     "db:reset": "node scripts/reset-db.js dev",
     "db:reset:test": "node scripts/reset-db.js test"
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.2.1",
+    "c8": "^12.0.0",
     "supertest": "^7.2.2"
   }
 }
