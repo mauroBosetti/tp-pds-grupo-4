@@ -111,6 +111,9 @@ jobs:
     name: Sonar Analysis (Temporal)
     runs-on: ubuntu-latest
     #needs: [backend, api-vuelos, frontend]
+    env:
+      DISABLE_ERD: "true"
+      PRISMA_DISABLE_ERD: "true"
 
     services:
       postgres:
