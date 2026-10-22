@@ -179,6 +179,7 @@ jobs:
 
       - name: Configurar condiciones globales en el Quality Gate ("Sonar way")
         run: |
+          SONAR_PASS=adminAdmin#123
           # Umbrales del Quality Gate
           MIN_COVERAGE=80                # Cobertura mínima requerida (%)
           MAX_RELIABILITY_RATING=1       # 1 = Rating A (Falla si hay bugs que bajen la nota a B o peor)
@@ -187,18 +188,28 @@ jobs:
           MIN_HOTSPOTS_REVIEWED=100      # % mínimo de Hotspots de seguridad revisados
           MAX_DUPLICATION=3              # % máximo de duplicación de código permitido
 
+          # 1. Crear Quality Gate personalizado
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create?name=CIGate" \
+            -u "admin:${SONAR_PASS}"
+
+          # 2. Establecer CIGate como predeterminado
+          curl -s -X POST "http://localhost:9000/api/qualitygates/set_as_default?name=CIGate" \
+            -u "admin:${SONAR_PASS}"
+
+          echo "Configurando condiciones globales en CIGate..."
+
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=coverage" -d "op=LT" -d "error=${MIN_COVERAGE}"
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=coverage" -d "op=LT" -d "error=${MIN_COVERAGE}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=reliability_rating" -d "op=GT" -d "error=${MAX_RELIABILITY_RATING}"
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=reliability_rating" -d "op=GT" -d "error=${MAX_RELIABILITY_RATING}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=security_rating" -d "op=GT" -d "error=${MAX_SECURITY_RATING}"
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=security_rating" -d "op=GT" -d "error=${MAX_SECURITY_RATING}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=sqale_rating" -d "op=GT" -d "error=${MAX_SQALE_RATING}"
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=sqale_rating" -d "op=GT" -d "error=${MAX_SQALE_RATING}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=security_hotspots_reviewed" -d "op=LT" -d "error=${MIN_HOTSPOTS_REVIEWED}"
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=security_hotspots_reviewed" -d "op=LT" -d "error=${MIN_HOTSPOTS_REVIEWED}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
-            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=duplicated_lines_density" -d "op=GT" -d "error=${MAX_DUPLICATION}"   
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=duplicated_lines_density" -d "op=GT" -d "error=${MAX_DUPLICATION}"
 
       - name: Ejecutar escaneo en SonarQube
         run: |
