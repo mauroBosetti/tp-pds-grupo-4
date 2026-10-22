@@ -179,8 +179,12 @@ jobs:
 
       - name: Ejecutar escaneo en SonarQube
         run: |
-          npm run sonar -- -Dsonar.host.url="http://localhost:9000" -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}"
-
+          run: |
+          npm run sonar -- \
+            -Dsonar.host.url="http://localhost:9000" \
+            -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}" \
+            -Dsonar.qualitygate.wait=true
+ 
       - name: Generar resumen de SonarQube y reporte descargable
         if: always()
         run: |
