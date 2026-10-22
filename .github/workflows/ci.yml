@@ -165,8 +165,15 @@ jobs:
             sleep 5
           done
           echo "SonarQube iniciado correctamente."
-          curl -s -X POST -u admin:admin "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=adminAdmin#1"
-          RESPONSE=$(curl -s -X POST -u admin:adminAdmin#1 "http://localhost:9000/api/user_tokens/generate?name=ci-token")
+          CHANGE_RES=$(curl -s -X POST "http://localhost:9000/api/users/change_password" \
+            -u admin:admin \
+            -d "login=admin" \
+            -d "previousPassword=admin" \
+            -d "password=adminAdmin#123")
+          echo "Respuesta cambio contraseña: $CHANGE_RES"
+          RESPONSE=$(curl -s -X POST "http://localhost:9000/api/user_tokens/generate?name=ci-token-$(date +%s)" \
+            -u "admin:adminAdmin#123")
+          echo "Respuesta generación token: $RESPONSE"
           SONAR_TOKEN=$(echo $RESPONSE | jq -r '.token')
           echo "SONAR_GENERATED_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
 
