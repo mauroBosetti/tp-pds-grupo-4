@@ -180,3 +180,39 @@ jobs:
       - name: Ejecutar escaneo en SonarQube
         run: |
           npm run sonar -- -Dsonar.host.url="http://localhost:9000" -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}"
+
+      - name: Generar resumen de SonarQube y reporte descargable
+        if: always()
+        run: |
+          # 1. Obtener métricas de la API local de SonarQube
+          MEASURES=$(curl -s -u "admin:adminAdmin#123" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc")
+
+          # 2. Extraer valores con jq
+          COV=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="coverage") | .value // "N/A"')
+          BUGS=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="bugs") | .value // "0"')
+          VULN=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="vulnerabilities") | .value // "0"')
+          SMELLS=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="code_smells") | .value // "0"')
+          DUP=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="duplicated_lines_density") | .value // "0"')
+          LINES=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="ncloc") | .value // "0"')
+
+          # 3. Escribir tabla en el resumen de GitHub Actions
+          echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟢 **Cobertura de Código** | **${COV}%** |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐛 **Bugs** | ${BUGS} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 **Vulnerabilidades** | ${VULN} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 **Code Smells** | ${SMELLS} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📑 **Duplicación** | ${DUP}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 **Líneas de Código** | ${LINES} |" >> $GITHUB_STEP_SUMMARY
+
+          # Guardar copia para descargar como artefacto
+          cp $GITHUB_STEP_SUMMARY reporte-sonarqube.md
+
+      - name: Subir reporte como artefacto descargable
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-sonarqube
+          path: reporte-sonarqube.md
+          retention-days: 15
