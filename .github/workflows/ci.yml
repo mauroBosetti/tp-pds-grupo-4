@@ -222,14 +222,10 @@ jobs:
       - name: Generar resumen de SonarQube
         if: always()
         run: |
-          sleep 3
-          # 1. Obtener estado detallado del Quality Gate desde SonarQube
-          QG_JSON=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4")
-
+          QG_JSON=$(curl -s -u "${SONAR_GENERATED_TOKEN}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4")
           QG_STATUS=$(echo "$QG_JSON" | jq -r '.projectStatus.status // "UNKNOWN"')
 
-          # 2. Obtener métricas del componente
-          MEASURES=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc,sqale_index,security_hotspots")
+          MEASURES=$(curl -s -u "${SONAR_GENERATED_TOKEN}:" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc,sqale_index,security_hotspots")
 
           COV=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="coverage") | .value // "N/A"')
           BUGS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="bugs") | .value // "0"')
@@ -240,7 +236,6 @@ jobs:
           DEBT=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="sqale_index") | .value // "0"')
           HOTSPOTS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="security_hotspots") | .value // "0"')
 
-          # 3. Leer la evaluación real devuelta por SonarQube para cada métrica
           COV_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="coverage") | .status // "OK"')
           REL_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="reliability_rating") | .status // "OK"')
           SEC_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_rating") | .status // "OK"')
@@ -248,16 +243,20 @@ jobs:
           DUP_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="duplicated_lines_density") | .status // "OK"')
           HOT_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_hotspots_reviewed") | .status // "OK"')
 
-          [ "$COV_COND" = "OK" ] && COV_STATE="✅" || COV_STATE="❌"
-          [ "$REL_COND" = "OK" ] && BUGS_STATE="✅" || BUGS_STATE="❌"
-          [ "$SEC_COND" = "OK" ] && VULN_STATE="✅" || VULN_STATE="❌"
-          [ "$SQA_COND" = "OK" ] && SMELLS_STATE="✅" || SMELLS_STATE="❌"
-          [ "$DUP_COND" = "OK" ] && DUP_STATE="✅" || DUP_STATE="❌"
-          [ "$HOT_COND" = "OK" ] && HOTSPOTS_STATE="✅" || HOTSPOTS_STATE="❌"
+          [ "$COV_COND" = "ERROR" ] && COV_STATE="❌" || COV_STATE="✅"
+          [ "$REL_COND" = "ERROR" ] && BUGS_STATE="❌" || BUGS_STATE="✅"
+          [ "$SEC_COND" = "ERROR" ] && VULN_STATE="❌" || VULN_STATE="✅"
+          [ "$SQA_COND" = "ERROR" ] && SMELLS_STATE="❌" || SMELLS_STATE="✅"
+          [ "$DUP_COND" = "ERROR" ] && DUP_STATE="❌" || DUP_STATE="✅"
+
+          if [ "$HOTSPOTS" = "0" ] || [ "$HOT_COND" != "ERROR" ]; then
+            HOTSPOTS_STATE="✅"
+          else
+            HOTSPOTS_STATE="❌"
+          fi
 
           [ "$QG_STATUS" = "OK" ] && QG_ICON="✅ PASSED" || QG_ICON="❌ FAILED"
 
-          # 4. Generar tabla de 5 columnas
           echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
           echo "### Resultado Quality Gate: **${QG_ICON}**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
