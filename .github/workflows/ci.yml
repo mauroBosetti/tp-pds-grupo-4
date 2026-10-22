@@ -188,16 +188,10 @@ jobs:
           MIN_HOTSPOTS_REVIEWED=100      # % mínimo de Hotspots de seguridad revisados
           MAX_DUPLICATION=3              # % máximo de duplicación de código permitido
 
-          # 1. Crear Quality Gate personalizado
           curl -s -X POST "http://localhost:9000/api/qualitygates/create?name=CIGate" \
             -u "admin:${SONAR_PASS}"
-
-          # 2. Establecer CIGate como predeterminado
           curl -s -X POST "http://localhost:9000/api/qualitygates/set_as_default?name=CIGate" \
             -u "admin:${SONAR_PASS}"
-
-          echo "Configurando condiciones globales en CIGate..."
-
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
             -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=coverage" -d "op=LT" -d "error=${MIN_COVERAGE}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
@@ -210,6 +204,13 @@ jobs:
             -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=security_hotspots_reviewed" -d "op=LT" -d "error=${MIN_HOTSPOTS_REVIEWED}"
           curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
             -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=duplicated_lines_density" -d "op=GT" -d "error=${MAX_DUPLICATION}"
+
+          echo "MIN_COVERAGE=${MIN_COVERAGE}" >> $GITHUB_ENV
+          echo "MAX_RELIABILITY_RATING=${MAX_RELIABILITY_RATING}" >> $GITHUB_ENV
+          echo "MAX_SECURITY_RATING=${MAX_SECURITY_RATING}" >> $GITHUB_ENV
+          echo "MAX_SQALE_RATING=${MAX_SQALE_RATING}" >> $GITHUB_ENV
+          echo "MIN_HOTSPOTS_REVIEWED=${MIN_HOTSPOTS_REVIEWED}" >> $GITHUB_ENV
+          echo "MAX_DUPLICATION=${MAX_DUPLICATION}" >> $GITHUB_ENV
 
       - name: Ejecutar escaneo en SonarQube
         run: |
@@ -241,13 +242,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🟢 **Cobertura de Código** | **${COV}%** |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐛 **Bugs** | ${BUGS} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔒 **Vulnerabilidades** | ${VULN} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧹 **Code Smells** | ${SMELLS} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ⏱️ **Deuda Técnica (Minutos)** | ${DEBT} min |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📑 **Duplicación** | ${DUP}% |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🛡️ **Hotspots de Seguridad** | ${HOTSPOTS} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟢 **Cobertura de Código** | **${COV}%** | ≥ ${{ env.MIN_COVERAGE }}% | ${COV_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | Rating ≤ ${{ env.MAX_RELIABILITY_RATING }} | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | Rating ≤ ${{ env.MAX_SECURITY_RATING }} | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏱️ **Deuda Técnica** | **${DEBT} min** | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📑 **Duplicación** | **${DUP}%** | ≤ ${{ env.MAX_DUPLICATION }}% | ${DUP_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🛡️ **Hotspots de Seguridad** | **${HOTSPOTS}** | ≥ ${{ env.MIN_HOTSPOTS_REVIEWED }}% revisados | ✅ |" >> $GITHUB_STEP_SUMMARY
           echo "| 📝 **Líneas de Código** | ${LINES} |" >> $GITHUB_STEP_SUMMARY
 
           cp $GITHUB_STEP_SUMMARY reporte-sonarqube.md
