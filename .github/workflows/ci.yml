@@ -165,7 +165,11 @@ jobs:
             sleep 5
           done
           echo "SonarQube iniciado correctamente."
+          curl -s -X POST -u admin:admin "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=Admin12345!"
+          RESPONSE=$(curl -s -X POST -u admin:Admin12345! "http://localhost:9000/api/user_tokens/generate?name=ci-token")
+          SONAR_TOKEN=$(echo $RESPONSE | jq -r '.token')
+          echo "SONAR_GENERATED_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
 
       - name: Ejecutar escaneo en SonarQube efímero
         run: |
-          npm run sonar -- -Dsonar.host.url="http://localhost:9000" -Dsonar.login="admin" -Dsonar.password="admin"
+          npm run sonar -- -Dsonar.host.url="http://localhost:9000" -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}"
