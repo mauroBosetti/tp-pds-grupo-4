@@ -5,7 +5,9 @@
     "packages/ctv-frontend",
     "packages/ctv-backend"
   ],
-  "scripts": {
+  "scripts": { 
+    "sonar": "sonar-scanner-npm",
+    "test:coverage": "npm run test:coverage -ws --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present"
   },
@@ -18,5 +20,8 @@
     "esbuild": true,
     "puppeteer": true,
     "prisma": true
+  },
+  "devDependencies": {
+    "@sonar/scan": "^5.0.2"
   }
 }

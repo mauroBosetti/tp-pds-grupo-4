@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "seed": "prisma db seed",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage --coverage.reporter=lcov --coverage.reporter=text",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:reset": "prisma migrate reset",
@@ -46,6 +47,10 @@
     "supertest": "^7.2.2",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11"
+  },
+    "optionalDependencies": { 
+      "@rollup/rollup-win32-x64-msvc": "^4.64.12" 
   }
 }
