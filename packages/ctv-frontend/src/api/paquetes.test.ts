@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buscarVuelos, comprarPaquete, crearPaquete, listarCatalogo, SinAutorizacion } from './paquetes'
+import { buscarVuelos, comprarPaquete, crearPaquete, listarCatalogo, obtenerDetalleDePaquete, SinAutorizacion } from './paquetes'
 import { guardarTokenUsuario } from '@/auth/tokenUsuario'
 
 function responderCon(cuerpo: unknown, init: { status?: number } = {}) {
@@ -101,5 +101,24 @@ describe('api de paquetes', () => {
     vi.stubGlobal('fetch', responderCon({}, { status: 401 }))
 
     await expect(comprarPaquete('p-1')).rejects.toBeInstanceOf(SinAutorizacion)
+  })
+
+  it('obtenerDetalleDePaquete trae el paquete con su token', async () => {
+    guardarTokenUsuario('abc.123')
+    const fetchFalso = responderCon({ id: 'p-1', comentarios: [] })
+    vi.stubGlobal('fetch', fetchFalso)
+
+    const detalle = await obtenerDetalleDePaquete('p-1')
+
+    const [url, opciones] = fetchFalso.mock.calls[0]
+    expect(url).toContain('/api/package/p-1')
+    expect(opciones.headers.Authorization).toBe('Bearer abc.123')
+    expect(detalle.comentarios).toEqual([])
+  })
+
+  it('obtenerDetalleDePaquete lanza SinAutorizacion cuando la sesión expiró', async () => {
+    vi.stubGlobal('fetch', responderCon({}, { status: 401 }))
+
+    await expect(obtenerDetalleDePaquete('p-1')).rejects.toBeInstanceOf(SinAutorizacion)
   })
 })

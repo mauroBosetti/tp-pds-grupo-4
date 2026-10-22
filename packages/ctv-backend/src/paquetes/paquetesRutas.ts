@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { requiereAgencia } from '../auth/requiereAgencia.js'
 import { requiereCliente } from '../auth/requiereCliente.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { requiereUsuario } from '../auth/requiereUsuario.js'
 import { buscarVuelos, ApiVuelosNoDisponible, VentaRechazada } from '../vuelos/clienteVuelos.js'
 import {
@@ -8,9 +9,9 @@ import {
   obtenerPaquetesDeAgencia,
   obtenerCatalogoDePaquetes,
   comprarPaquete,
+  obtenerDetalleDePaquete,
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
-  ClienteInexistente,
 } from './paquetesServicio.js'
 
 const packageRouter: Router = Router()
@@ -42,6 +43,18 @@ packageRouter.get('/vuelos', requiereAgencia, async (req, res) => {
   } catch (error) {
     if (error instanceof ApiVuelosNoDisponible) {
       res.status(502).json({ error: error.message })
+      return
+    }
+    throw error
+  }
+})
+
+packageRouter.get('/:id', requiereUsuario, async (req, res) => {
+  try {
+    res.json(await obtenerDetalleDePaquete(String(req.params.id)))
+  } catch (error) {
+    if (error instanceof PaqueteInexistente) {
+      res.status(404).json({ error: error.message })
       return
     }
     throw error

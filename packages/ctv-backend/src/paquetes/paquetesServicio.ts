@@ -1,4 +1,10 @@
 import { crearCompra } from '../compras/comprasRepositorio.js'
+import {
+  buscarOpinionesDePaquete,
+  buscarPuntajesDeTodosLosPaquetes,
+} from '../opiniones/opinionesRepositorio.js'
+import { resumirPuntajes } from '../opiniones/resumenDePuntajes.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
@@ -6,17 +12,12 @@ import {
   buscarPaquetesDeAgencia,
   buscarTodosLosPaquetes,
   buscarPaquetePorId,
+  buscarPaqueteConAgencia,
 } from './paquetesRepositorio.js'
 
 export class PaqueteInexistente extends Error {
   constructor() {
     super('El paquete no existe')
-  }
-}
-
-export class ClienteInexistente extends Error {
-  constructor() {
-    super('El cliente no existe')
   }
 }
 
@@ -69,8 +70,30 @@ export function obtenerPaquetesDeAgencia(agenciaId: string) {
   return buscarPaquetesDeAgencia(agenciaId)
 }
 
-export function obtenerCatalogoDePaquetes() {
-  return buscarTodosLosPaquetes()
+export async function obtenerCatalogoDePaquetes() {
+  const [paquetes, puntajes] = await Promise.all([
+    buscarTodosLosPaquetes(),
+    buscarPuntajesDeTodosLosPaquetes(),
+  ])
+  return paquetes.map((paquete) => {
+    const puntajesDelPaquete = puntajes
+      .filter(({ paqueteId }) => paqueteId === paquete.id)
+      .map(({ puntaje }) => puntaje as number)
+    return { ...paquete, ...resumirPuntajes(puntajesDelPaquete) }
+  })
+}
+
+export async function obtenerDetalleDePaquete(paqueteId: string) {
+  const paquete = await buscarPaqueteConAgencia(paqueteId)
+  if (!paquete) {
+    throw new PaqueteInexistente()
+  }
+  const opiniones = await buscarOpinionesDePaquete(paqueteId)
+  const puntajes = opiniones.flatMap(({ puntaje }) => (puntaje === null ? [] : [puntaje]))
+  const comentarios = opiniones.flatMap(({ comentario, puntaje, usuarioCliente }) =>
+    comentario === null ? [] : [{ autor: usuarioCliente.nombre, puntaje, comentario }],
+  )
+  return { ...paquete, ...resumirPuntajes(puntajes), comentarios }
 }
 
 export async function comprarPaquete(paqueteId: string, cuentaId: string) {

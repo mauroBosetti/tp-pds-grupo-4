@@ -5,9 +5,10 @@ import YAML from 'yamljs'
 import swaggerUi from 'swagger-ui-express'
 import {agencyRouter} from "./agencias/agenciasRutas.js";
 import {authRouter} from "./auth/authRutas.js";
+import {comprasRouter} from "./compras/comprasRutas.js";
 import {packageRouter} from "./paquetes/paquetesRutas.js";
 import {reportRouter} from "./reportes/reportesRutas.js";
-import {reviewRouter} from "./opiniones/opinionesRutas.js";
+import {opinionesRouter} from "./opiniones/opinionesRutas.js";
 import {userRouter} from "./usuarios/usuariosRutas.js";
 
 const app = express()
@@ -21,9 +22,10 @@ const swaggerDocument = YAML.load('./resources/swagger.yaml')
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use('/api/agencias', agencyRouter)
 app.use('/api/auth', authRouter)
+app.use('/api/compras', comprasRouter)
 app.use('/api/package', packageRouter)
 app.use('/api/report', reportRouter)
-app.use('/api/review', reviewRouter)
+app.use('/api/review', opinionesRouter)
 app.use('/api/user', userRouter)
 
 app.get('/hola', (_req, res) => {

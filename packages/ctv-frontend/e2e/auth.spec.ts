@@ -74,6 +74,10 @@ test.describe('Pantalla de Autenticación de Usuarios (Cliente y Agencia)', () =
       })
     })
 
+    await page.route('**/api/package/catalogo', async (route) => {
+      await route.fulfill({ status: 200, json: [] })
+    })
+
     await page.getByRole('tab', { name: /^registrarse$/i }).click()
     await page.getByLabel(/nombre/i).fill('Carlos')
     await page.getByLabel(/^email$/i).fill('carlos@cliente.com')
@@ -82,7 +86,7 @@ test.describe('Pantalla de Autenticación de Usuarios (Cliente y Agencia)', () =
     await page.getByRole('button', { name: /crear cuenta/i }).click()
 
     await expect(page).toHaveURL(/\/catalogo$/)
-    await expect(page.getByText(/hola, carlos/i)).toBeVisible()
+    await expect(page.getByRole('banner').getByText('Carlos')).toBeVisible()
   })
 
   test('login de agencia redirige a /agencia', async ({ page }) => {
@@ -94,6 +98,10 @@ test.describe('Pantalla de Autenticación de Usuarios (Cliente y Agencia)', () =
           usuario: { nombre: 'Viajes Sur', email: 'sur@agencia.com', rol: 'agencia' },
         },
       })
+    })
+
+    await page.route('**/api/package', async (route) => {
+      await route.fulfill({ status: 200, json: [] })
     })
 
     await page.getByRole('tab', { name: /^agencia$/i }).click()

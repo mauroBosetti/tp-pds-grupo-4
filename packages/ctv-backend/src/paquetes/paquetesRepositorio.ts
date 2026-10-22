@@ -30,3 +30,10 @@ export function buscarTodosLosPaquetes() {
 export function buscarPaquetePorId(id: string) {
   return cliente.paquete.findUnique({ where: { id } })
 }
+
+export function buscarPaqueteConAgencia(id: string) {
+  return cliente.paquete.findUnique({
+    where: { id },
+    include: { agencia: { select: { id: true, nombre: true } } },
+  })
+}

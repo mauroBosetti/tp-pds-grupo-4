@@ -1,15 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cliente } from '../db/cliente.js'
+import {
+  buscarOpinionesDePaquete,
+  buscarPuntajesDeTodosLosPaquetes,
+} from '../opiniones/opinionesRepositorio.js'
 import { crearCompra } from '../compras/comprasRepositorio.js'
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
+import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { venderVuelos } from '../vuelos/clienteVuelos.js'
 import {
   DatosDePaqueteInvalidos,
-  ClienteInexistente,
   PaqueteInexistente,
   comprarPaquete,
   registrarPaquete,
   obtenerCatalogoDePaquetes,
+  obtenerDetalleDePaquete,
 } from './paquetesServicio.js'
 
 vi.mock('../db/cliente.js', () => ({
@@ -19,6 +24,10 @@ vi.mock('../db/cliente.js', () => ({
 }))
 
 vi.mock('../vuelos/clienteVuelos.js', () => ({ venderVuelos: vi.fn() }))
+vi.mock('../opiniones/opinionesRepositorio.js', () => ({
+  buscarOpinionesDePaquete: vi.fn(),
+  buscarPuntajesDeTodosLosPaquetes: vi.fn(),
+}))
 vi.mock('../compras/comprasRepositorio.js', () => ({ crearCompra: vi.fn() }))
 vi.mock('../usuariosCliente/usuariosClienteRepositorio.js', () => ({
   buscarUsuarioClientePorCuentaId: vi.fn(),
@@ -28,6 +37,8 @@ const crearPaquete = vi.mocked(cliente.paquete.create)
 const buscarPaquetes = vi.mocked(cliente.paquete.findMany)
 const buscarPaquete = vi.mocked(cliente.paquete.findUnique)
 const vender = vi.mocked(venderVuelos)
+const buscarPuntajes = vi.mocked(buscarPuntajesDeTodosLosPaquetes)
+const buscarOpiniones = vi.mocked(buscarOpinionesDePaquete)
 const registrarCompra = vi.mocked(crearCompra)
 const buscarCliente = vi.mocked(buscarUsuarioClientePorCuentaId)
 
@@ -90,6 +101,7 @@ describe('obtenerCatalogoDePaquetes', () => {
     buscarPaquetes.mockResolvedValue([
       { id: 'p-1', ...datosValidos, agenciaId, agencia: { id: agenciaId, nombre: 'Turismo Sur' } },
     ])
+    buscarPuntajes.mockResolvedValue([])
 
     const catalogo = await obtenerCatalogoDePaquetes()
 
@@ -148,5 +160,50 @@ describe('comprarPaquete', () => {
 
     await expect(comprarPaquete('p-1', 'cuenta-3')).rejects.toBeInstanceOf(ClienteInexistente)
     expect(vender).not.toHaveBeenCalled()
+  })
+})
+
+describe('puntaje promedio en el catálogo', () => {
+  it('suma a cada paquete el promedio de sus puntajes', async () => {
+    const agencia = { id: 'ag-1', nombre: 'Turismo Sur' }
+    buscarPaquetes.mockResolvedValue([
+      { id: 'p-1', ...datosValidos, agenciaId: 'ag-1', agencia },
+      { id: 'p-2', ...datosValidos, agenciaId: 'ag-1', agencia },
+    ])
+    buscarPuntajes.mockResolvedValue([
+      { paqueteId: 'p-1', puntaje: 5 },
+      { paqueteId: 'p-1', puntaje: 4 },
+    ])
+
+    const [conOpiniones, sinOpiniones] = await obtenerCatalogoDePaquetes()
+
+    expect(conOpiniones).toMatchObject({ puntajePromedio: 4.5, cantidadDePuntajes: 2 })
+    expect(sinOpiniones).toMatchObject({ puntajePromedio: null, cantidadDePuntajes: 0 })
+  })
+})
+
+describe('obtenerDetalleDePaquete', () => {
+  beforeEach(() => {
+    buscarPaquete.mockReset()
+    buscarOpiniones.mockReset()
+  })
+
+  it('devuelve el promedio y solo las opiniones que tienen comentario', async () => {
+    buscarPaquete.mockResolvedValue({ id: 'p-1', ...datosValidos, agenciaId: 'ag-1' })
+    buscarOpiniones.mockResolvedValue([
+      { usuarioClienteId: 'u-1', paqueteId: 'p-1', favorito: false, puntaje: 5, comentario: 'Genial', usuarioCliente: { nombre: 'Clara' } },
+      { usuarioClienteId: 'u-2', paqueteId: 'p-1', favorito: false, puntaje: 3, comentario: null, usuarioCliente: { nombre: 'Dani' } },
+    ])
+
+    const detalle = await obtenerDetalleDePaquete('p-1')
+
+    expect(detalle).toMatchObject({ puntajePromedio: 4, cantidadDePuntajes: 2 })
+    expect(detalle.comentarios).toEqual([{ autor: 'Clara', puntaje: 5, comentario: 'Genial' }])
+  })
+
+  it('falla cuando el paquete no existe', async () => {
+    buscarPaquete.mockResolvedValue(null)
+
+    await expect(obtenerDetalleDePaquete('x')).rejects.toBeInstanceOf(PaqueteInexistente)
   })
 })

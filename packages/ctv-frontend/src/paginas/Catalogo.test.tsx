@@ -14,6 +14,7 @@ function renderizar() {
         <Routes>
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/login" element={<p>Pantalla de login</p>} />
+          <Route path="/paquetes/:id" element={<p>Detalle del paquete</p>} />
         </Routes>
       </MemoryRouter>
     </AuthUsuarioProvider>,
@@ -31,6 +32,8 @@ const paquetes: PaqueteDeCatalogo[] = [
     vueloVueltaId: 2,
     agenciaId: 'ag-1',
     agencia: { id: 'ag-1', nombre: 'Turismo Sur' },
+    puntajePromedio: 4.5,
+    cantidadDePuntajes: 2,
   },
   {
     id: 'p-2',
@@ -42,6 +45,8 @@ const paquetes: PaqueteDeCatalogo[] = [
     vueloVueltaId: 4,
     agenciaId: 'ag-2',
     agencia: { id: 'ag-2', nombre: 'Viajes del Norte' },
+    puntajePromedio: null,
+    cantidadDePuntajes: 0,
   },
 ]
 
@@ -91,6 +96,27 @@ describe('Catalogo', () => {
     await waitFor(() => {
       expect(screen.getByText('Pantalla de login')).toBeInTheDocument()
     })
+  })
+
+  it('muestra el puntaje promedio de cada paquete', async () => {
+    vi.spyOn(apiPaquetes, 'listarCatalogo').mockResolvedValue(paquetes)
+
+    renderizar()
+
+    expect(await screen.findByText('4.5')).toBeInTheDocument()
+    expect(screen.getByText('(2 opiniones)')).toBeInTheDocument()
+    expect(screen.getByText('Sin opiniones todavía')).toBeInTheDocument()
+  })
+
+  it('lleva al detalle del paquete con el botón Ver más', async () => {
+    vi.spyOn(apiPaquetes, 'listarCatalogo').mockResolvedValue(paquetes)
+    renderizar()
+    await screen.findByText('Escapada a Madrid')
+    const fila = screen.getByText('Escapada a Madrid').closest('li') as HTMLElement
+
+    await userEvent.click(within(fila).getByRole('button', { name: 'Ver más' }))
+
+    expect(await screen.findByText('Detalle del paquete')).toBeInTheDocument()
   })
 
   describe('al comprar un paquete', () => {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { comprarPaquete, listarCatalogo, SinAutorizacion, type PaqueteDeCatalogo } from '@/api/paquetes'
 import { useAuthUsuario } from '@/auth/AuthUsuarioContext'
+import PuntajePromedio from '@/components/PuntajePromedio'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -9,9 +10,15 @@ interface PropiedadesListaDePaquetes {
   paquetes: PaqueteDeCatalogo[]
   paqueteComprandoId: string | null
   alComprar: (paquete: PaqueteDeCatalogo) => void
+  alVerMas: (paquete: PaqueteDeCatalogo) => void
 }
 
-function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: PropiedadesListaDePaquetes) {
+function ListaDePaquetes({
+  paquetes,
+  paqueteComprandoId,
+  alComprar,
+  alVerMas,
+}: PropiedadesListaDePaquetes) {
   if (paquetes.length === 0) {
     return (
       <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground text-center">
@@ -32,17 +39,26 @@ function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: Propiedade
               {paquete.origen} → {paquete.destino}
             </span>
             <span className="text-xs text-muted-foreground">{paquete.agencia.nombre}</span>
+            <PuntajePromedio
+              puntajePromedio={paquete.puntajePromedio}
+              cantidadDePuntajes={paquete.cantidadDePuntajes}
+            />
           </span>
           <span className="flex flex-col items-end gap-2">
             <span className="font-medium">${paquete.precio}</span>
-            <Button
-              type="button"
-              size="sm"
-              disabled={paqueteComprandoId !== null}
-              onClick={() => alComprar(paquete)}
-            >
-              {paqueteComprandoId === paquete.id ? 'Comprando...' : 'Comprar'}
-            </Button>
+            <span className="flex gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => alVerMas(paquete)}>
+                Ver más
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                  disabled={paqueteComprandoId !== null}
+                onClick={() => alComprar(paquete)}
+              >
+                {paqueteComprandoId === paquete.id ? 'Comprando...' : 'Comprar'}
+              </Button>
+            </span>
           </span>
         </li>
       ))}
@@ -51,7 +67,7 @@ function ListaDePaquetes({ paquetes, paqueteComprandoId, alComprar }: Propiedade
 }
 
 export default function Catalogo() {
-  const { usuario, cerrarSesion } = useAuthUsuario()
+  const { cerrarSesion } = useAuthUsuario()
   const navegar = useNavigate()
   const [paquetes, setPaquetes] = useState<PaqueteDeCatalogo[] | null>(null)
   const [error, setError] = useState('')
@@ -94,11 +110,11 @@ export default function Catalogo() {
   }, [])
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-md">
+    <main className="flex flex-1 items-start justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-4xl">
         <CardHeader>
-          <CardTitle>Hola{usuario ? `, ${usuario.nombre}` : ''}</CardTitle>
-          <CardDescription>Catálogo de paquetes disponibles</CardDescription>
+          <CardTitle>Catálogo de paquetes</CardTitle>
+          <CardDescription>Elegí un paquete para comprar sus vuelos de ida y vuelta</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {error && (
@@ -118,11 +134,9 @@ export default function Catalogo() {
               paquetes={paquetes}
               paqueteComprandoId={paqueteComprandoId}
               alComprar={comprar}
+              alVerMas={(paquete) => navegar(`/paquetes/${paquete.id}`)}
             />
           )}
-          <Button type="button" variant="ghost" onClick={salir}>
-            Cerrar sesión
-          </Button>
         </CardContent>
       </Card>
     </main>
