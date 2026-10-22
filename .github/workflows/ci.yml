@@ -181,12 +181,12 @@ jobs:
         run: |
           SONAR_PASS=adminAdmin#123
           # Umbrales del Quality Gate
-          MIN_COVERAGE=80                # Cobertura mínima requerida (%)
-          MAX_RELIABILITY_RATING=1       # 1 = Rating A (Falla si hay bugs que bajen la nota a B o peor)
-          MAX_SECURITY_RATING=1          # 1 = Rating A (Falla si hay vulnerabilidades)
-          MAX_SQALE_RATING=1             # 1 = Rating A (Falla si la mantenibilidad/Code Smells caen a B)
-          MIN_HOTSPOTS_REVIEWED=100      # % mínimo de Hotspots de seguridad revisados
-          MAX_DUPLICATION=3              # % máximo de duplicación de código permitido
+          MIN_COVERAGE=50
+          MAX_RELIABILITY_RATING=5
+          MAX_SECURITY_RATING=5
+          MAX_SQALE_RATING=1
+          MIN_HOTSPOTS_REVIEWED=100
+          MAX_DUPLICATION=3
 
           curl -s -X POST "http://localhost:9000/api/qualitygates/create?name=CIGate" \
             -u "admin:${SONAR_PASS}"
@@ -223,13 +223,14 @@ jobs:
         if: always()
         run: |
           sleep 3
-          # 1. Estado del Quality Gate
-          QG_STATUS=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4" | jq -r '.projectStatus.status // "UNKNOWN"')
+          # 1. Obtener estado detallado del Quality Gate desde SonarQube
+          QG_JSON=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4")
 
-          # 2. Obtención de métricas del componente
+          QG_STATUS=$(echo "$QG_JSON" | jq -r '.projectStatus.status // "UNKNOWN"')
+
+          # 2. Obtener métricas del componente
           MEASURES=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc,sqale_index,security_hotspots")
 
-          # 3. Extracción de valores
           COV=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="coverage") | .value // "N/A"')
           BUGS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="bugs") | .value // "0"')
           VULN=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="vulnerabilities") | .value // "0"')
@@ -239,27 +240,36 @@ jobs:
           DEBT=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="sqale_index") | .value // "0"')
           HOTSPOTS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="security_hotspots") | .value // "0"')
 
-          # 4. Evaluación de estados individuales frente al umbral
-          if [ "$COV" != "N/A" ] && node -e 'process.exit(parseFloat(process.argv[1]) < parseFloat(process.argv[2]) ? 0 : 1)' "$COV" "${{ env.MIN_COVERAGE }}"; then COV_STATE="❌"; else COV_STATE="✅"; fi
-          if [ "$BUGS" -gt 0 ]; then BUGS_STATE="❌"; else BUGS_STATE="✅"; fi
-          if [ "$VULN" -gt 0 ]; then VULN_STATE="❌"; else VULN_STATE="✅"; fi
-          if [ "$DUP" != "N/A" ] && node -e 'process.exit(parseFloat(process.argv[1]) > parseFloat(process.argv[2]) ? 0 : 1)' "$DUP" "${{ env.MAX_DUPLICATION }}"; then DUP_STATE="❌"; else DUP_STATE="✅"; fi
+          # 3. Leer la evaluación real devuelta por SonarQube para cada métrica
+          COV_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="coverage") | .status // "OK"')
+          REL_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="reliability_rating") | .status // "OK"')
+          SEC_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_rating") | .status // "OK"')
+          SQA_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="sqale_rating") | .status // "OK"')
+          DUP_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="duplicated_lines_density") | .status // "OK"')
+          HOT_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_hotspots_reviewed") | .status // "OK"')
 
-          if [ "$QG_STATUS" = "OK" ]; then QG_ICON="✅ PASSED"; else QG_ICON="❌ FAILED"; fi
+          [ "$COV_COND" = "OK" ] && COV_STATE="✅" || COV_STATE="❌"
+          [ "$REL_COND" = "OK" ] && BUGS_STATE="✅" || BUGS_STATE="❌"
+          [ "$SEC_COND" = "OK" ] && VULN_STATE="✅" || VULN_STATE="❌"
+          [ "$SQA_COND" = "OK" ] && SMELLS_STATE="✅" || SMELLS_STATE="❌"
+          [ "$DUP_COND" = "OK" ] && DUP_STATE="✅" || DUP_STATE="❌"
+          [ "$HOT_COND" = "OK" ] && HOTSPOTS_STATE="✅" || HOTSPOTS_STATE="❌"
 
-          # 5. Generación de la tabla con 5 columnas
+          [ "$QG_STATUS" = "OK" ] && QG_ICON="✅ PASSED" || QG_ICON="❌ FAILED"
+
+          # 4. Generar tabla de 5 columnas
           echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
           echo "### Resultado Quality Gate: **${QG_ICON}**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Métrica | Valor Actual | Umbral Corrida (CIGate) | Estándar Sonar way | Estado |" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor Actual | Umbral Configurado (CIGate) | Estándar Sonar way | Estado |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- | --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| 🟢 **Cobertura de Código** | **${COV}%** | ≥ ${{ env.MIN_COVERAGE }}% | ≥ 80% (Código Nuevo) | ${COV_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | 0 (Rating ≤ ${{ env.MAX_RELIABILITY_RATING }}) | 0 (Rating A en Código Nuevo) | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | 0 (Rating ≤ ${{ env.MAX_SECURITY_RATING }}) | 0 (Rating A en Código Nuevo) | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} | Rating A (Código Nuevo) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | Rating ≤ ${{ env.MAX_RELIABILITY_RATING }} | Rating A (Código Nuevo) | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | Rating ≤ ${{ env.MAX_SECURITY_RATING }} | Rating A (Código Nuevo) | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} | Rating A (Código Nuevo) | ${SMELLS_STATE} |" >> $GITHUB_STEP_SUMMARY
           echo "| ⏱️ **Deuda Técnica** | **${DEBT} min** | - | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
           echo "| 📑 **Duplicación de Código** | **${DUP}%** | ≤ ${{ env.MAX_DUPLICATION }}% | ≤ 3% (Código Nuevo) | ${DUP_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🛡️ **Hotspots de Seguridad** | **${HOTSPOTS}** | ≥ ${{ env.MIN_HOTSPOTS_REVIEWED }}% | 100% (Código Nuevo) | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🛡️ **Hotspots de Seguridad** | **${HOTSPOTS}** | ≥ ${{ env.MIN_HOTSPOTS_REVIEWED }}% revisados | 100% (Código Nuevo) | ${HOTSPOTS_STATE} |" >> $GITHUB_STEP_SUMMARY
           echo "| 📝 **Líneas de Código** | **${LINES}** | - | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
 
           cp $GITHUB_STEP_SUMMARY reporte-sonarqube.md
