@@ -262,7 +262,6 @@ jobs:
 
           [ "$QG_STATUS" = "OK" ] && QG_ICON="✅ PASSED" || QG_ICON="❌ FAILED"
 
-          # 4. Evaluar alineación dinámica del umbral CIGate vs Sonar way
           [ "${{ env.MIN_COVERAGE }}" -ge 80 ] && COV_ALIGN="Alineado ✅" || COV_ALIGN="Flexibilizado ⚠️"
           [ "${{ env.MAX_RELIABILITY_RATING }}" -le 1 ] && REL_ALIGN="Alineado ✅" || REL_ALIGN="Flexibilizado ⚠️"
           [ "${{ env.MAX_SECURITY_RATING }}" -le 1 ] && SEC_ALIGN="Alineado ✅" || SEC_ALIGN="Flexibilizado ⚠️"
@@ -270,16 +269,19 @@ jobs:
           [ "${{ env.MAX_DUPLICATION }}" -le 3 ] && DUP_ALIGN="Alineado ✅" || DUP_ALIGN="Flexibilizado ⚠️"
           [ "${{ env.MIN_HOTSPOTS_REVIEWED }}" -ge 100 ] && HOT_ALIGN="Alineado ✅" || HOT_ALIGN="Flexibilizado ⚠️"
 
-          # 5. Generar la tabla de 6 columnas
+          case "${{ env.MAX_RELIABILITY_RATING }}" in 1) REL_L="A";; 2) REL_L="B";; 3) REL_L="C";; 4) REL_L="D";; 5) REL_L="E";; *) REL_L="${{ env.MAX_RELIABILITY_RATING }}";; esac
+          case "${{ env.MAX_SECURITY_RATING }}" in 1) SEC_L="A";; 2) SEC_L="B";; 3) SEC_L="C";; 4) SEC_L="D";; 5) SEC_L="E";; *) SEC_L="${{ env.MAX_SECURITY_RATING }}";; esac
+          case "${{ env.MAX_SQALE_RATING }}" in 1) SQA_L="A";; 2) SQA_L="B";; 3) SQA_L="C";; 4) SQA_L="D";; 5) SQA_L="E";; *) SQA_L="${{ env.MAX_SQALE_RATING }}";; esac
+
           echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
           echo "### Resultado Quality Gate: **${QG_ICON}**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Métrica | Valor Actual | Umbral Configurado (CIGate) | Estándar Sonar way | Alineación CIGate | Estado Corrida |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- | --- | --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| 🟢 **Cobertura de Código** | **${COV}%** | ≥ ${{ env.MIN_COVERAGE }}% | ≥ 80% (Código Nuevo) | ${COV_ALIGN} | ${COV_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | Rating ≤ ${{ env.MAX_RELIABILITY_RATING }} | Rating A (Código Nuevo) | ${REL_ALIGN} | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | Rating ≤ ${{ env.MAX_SECURITY_RATING }} | Rating A (Código Nuevo) | ${SEC_ALIGN} | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} | Rating A (Código Nuevo) | ${SQA_ALIGN} | ${SMELLS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | Rating ≤ ${{ env.MAX_RELIABILITY_RATING }} (${REL_L}) | Rating A (Código Nuevo) | ${REL_ALIGN} | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | Rating ≤ ${{ env.MAX_SECURITY_RATING }} (${SEC_L}) | Rating A (Código Nuevo) | ${SEC_ALIGN} | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} (${SQA_L}) | Rating A (Código Nuevo) | ${SQA_ALIGN} | ${SMELLS_STATE} |" >> $GITHUB_STEP_SUMMARY
           echo "| ⏱️ **Deuda Técnica** | **${DEBT} min** | - | - | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
           echo "| 📑 **Duplicación de Código** | **${DUP}%** | ≤ ${{ env.MAX_DUPLICATION }}% | ≤ 3% (Código Nuevo) | ${DUP_ALIGN} | ${DUP_STATE} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🛡️ **Hotspots de Seguridad** | **${HOTSPOTS}** | ≥ ${{ env.MIN_HOTSPOTS_REVIEWED }}% revisados | 100% (Código Nuevo) | ${HOT_ALIGN} | ${HOTSPOTS_STATE} |" >> $GITHUB_STEP_SUMMARY
