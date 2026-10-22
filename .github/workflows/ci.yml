@@ -177,40 +177,68 @@ jobs:
           SONAR_TOKEN=$(echo $RESPONSE | jq -r '.token')
           echo "SONAR_GENERATED_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
 
+      - name: Configurar condiciones globales en el Quality Gate ("Sonar way")
+        run: |
+          # Umbrales del Quality Gate
+          MIN_COVERAGE=80                # Cobertura mínima requerida (%)
+          MAX_RELIABILITY_RATING=1       # 1 = Rating A (Falla si hay bugs que bajen la nota a B o peor)
+          MAX_SECURITY_RATING=1          # 1 = Rating A (Falla si hay vulnerabilidades)
+          MAX_SQALE_RATING=1             # 1 = Rating A (Falla si la mantenibilidad/Code Smells caen a B)
+          MIN_HOTSPOTS_REVIEWED=100      # % mínimo de Hotspots de seguridad revisados
+          MAX_DUPLICATION=3              # % máximo de duplicación de código permitido
+
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=coverage" -d "op=LT" -d "error=${MIN_COVERAGE}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=reliability_rating" -d "op=GT" -d "error=${MAX_RELIABILITY_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=security_rating" -d "op=GT" -d "error=${MAX_SECURITY_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=sqale_rating" -d "op=GT" -d "error=${MAX_SQALE_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=security_hotspots_reviewed" -d "op=LT" -d "error=${MIN_HOTSPOTS_REVIEWED}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=Sonar way" -d "metric=duplicated_lines_density" -d "op=GT" -d "error=${MAX_DUPLICATION}"   
+
       - name: Ejecutar escaneo en SonarQube
         run: |
-          run: |
           npm run sonar -- \
             -Dsonar.host.url="http://localhost:9000" \
             -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}" \
             -Dsonar.qualitygate.wait=true
- 
-      - name: Generar resumen de SonarQube y reporte descargable
+      
+      - name: Generar resumen de SonarQube
         if: always()
         run: |
-          # 1. Obtener métricas de la API local de SonarQube
-          MEASURES=$(curl -s -u "admin:adminAdmin#123" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc")
+          QG_STATUS=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4" | jq -r '.projectStatus.status // "UNKNOWN"')
 
-          # 2. Extraer valores con jq
-          COV=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="coverage") | .value // "N/A"')
-          BUGS=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="bugs") | .value // "0"')
-          VULN=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="vulnerabilities") | .value // "0"')
-          SMELLS=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="code_smells") | .value // "0"')
-          DUP=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="duplicated_lines_density") | .value // "0"')
-          LINES=$(echo $MEASURES | jq -r '.component.measures[] | select(.metric=="ncloc") | .value // "0"')
+          MEASURES=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc,sqale_index,security_hotspots")
 
-          # 3. Escribir tabla en el resumen de GitHub Actions
+          COV=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="coverage") | .value // "N/A"')
+          BUGS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="bugs") | .value // "0"')
+          VULN=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="vulnerabilities") | .value // "0"')
+          SMELLS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="code_smells") | .value // "0"')
+          DUP=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="duplicated_lines_density") | .value // "0"')
+          LINES=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="ncloc") | .value // "0"')
+          DEBT=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="sqale_index") | .value // "0"')
+          HOTSPOTS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="security_hotspots") | .value // "0"')
+
+          if [ "$QG_STATUS" = "OK" ]; then QG_ICON="✅ PASSED"; else QG_ICON="❌ FAILED"; fi
+
           echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
+          echo "### Resultado Quality Gate: **${QG_ICON}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Métrica | Valor |" >> $GITHUB_STEP_SUMMARY
           echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
           echo "| 🟢 **Cobertura de Código** | **${COV}%** |" >> $GITHUB_STEP_SUMMARY
           echo "| 🐛 **Bugs** | ${BUGS} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🔒 **Vulnerabilidades** | ${VULN} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🧹 **Code Smells** | ${SMELLS} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏱️ **Deuda Técnica (Minutos)** | ${DEBT} min |" >> $GITHUB_STEP_SUMMARY
           echo "| 📑 **Duplicación** | ${DUP}% |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🛡️ **Hotspots de Seguridad** | ${HOTSPOTS} |" >> $GITHUB_STEP_SUMMARY
           echo "| 📝 **Líneas de Código** | ${LINES} |" >> $GITHUB_STEP_SUMMARY
 
-          # Guardar copia para descargar como artefacto
           cp $GITHUB_STEP_SUMMARY reporte-sonarqube.md
 
       - name: Subir reporte como artefacto descargable
