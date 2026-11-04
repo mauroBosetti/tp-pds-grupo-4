@@ -41,7 +41,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ vars.DOCKERHUB_USERNAME }}/${{ matrix.imagen }}
+          images: ${{ vars.DOCKERHUB_USERNAME }}/pds-g4-${{ matrix.imagen }}
           tags: |
             type=raw,value=latest
             type=sha,format=short
