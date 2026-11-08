@@ -106,3 +106,192 @@ jobs:
           name: playwright-report
           path: packages/ctv-frontend/playwright-report/
           retention-days: 7
+  
+  sonar:
+    name: Sonar Analysis (Temporal)
+    runs-on: ubuntu-latest
+    needs: [backend, api-vuelos, frontend]
+    env:
+      DISABLE_ERD: "true"
+      PRISMA_DISABLE_ERD: "true"
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: vuelos_test
+          POSTGRES_PASSWORD: vuelos_test
+          POSTGRES_DB: vuelos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      sonarqube:
+        image: sonarqube:community
+        ports:
+          - 9000:9000
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar cliente Prisma
+        run: npm run db:generate -w ctv-backend
+
+      - name: Generar coberturas de todos los paquetes
+        env:
+          TEST_DATABASE_URL: postgresql://vuelos_test:vuelos_test@localhost:5432/vuelos_test
+        run: npm run test:coverage
+
+      - name: Esperar a que SonarQube esté listo
+        run: |
+          until curl -s http://localhost:9000/api/system/status | grep -q '"status":"UP"'; do
+            echo "Esperando que el contenedor de SonarQube inicie..."
+            sleep 5
+          done
+          echo "SonarQube iniciado correctamente."
+          CHANGE_RES=$(curl -s -X POST "http://localhost:9000/api/users/change_password" \
+            -u admin:admin \
+            -d "login=admin" \
+            -d "previousPassword=admin" \
+            -d "password=adminAdmin#123")
+          echo "Respuesta cambio contraseña: $CHANGE_RES"
+          RESPONSE=$(curl -s -X POST "http://localhost:9000/api/user_tokens/generate?name=ci-token-$(date +%s)" \
+            -u "admin:adminAdmin#123")
+          echo "Respuesta generación token: $RESPONSE"
+          SONAR_TOKEN=$(echo $RESPONSE | jq -r '.token')
+          echo "SONAR_GENERATED_TOKEN=$SONAR_TOKEN" >> $GITHUB_ENV
+
+      - name: Configurar condiciones globales en el Quality Gate ("Sonar way")
+        run: |
+          SONAR_PASS=adminAdmin#123
+          # Umbrales del Quality Gate
+          MIN_COVERAGE=50
+          MAX_RELIABILITY_RATING=5
+          MAX_SECURITY_RATING=5
+          MAX_SQALE_RATING=1
+          MIN_HOTSPOTS_REVIEWED=100
+          MAX_DUPLICATION=3
+
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create?name=CIGate" \
+            -u "admin:${SONAR_PASS}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/set_as_default?name=CIGate" \
+            -u "admin:${SONAR_PASS}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=coverage" -d "op=LT" -d "error=${MIN_COVERAGE}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=reliability_rating" -d "op=GT" -d "error=${MAX_RELIABILITY_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=security_rating" -d "op=GT" -d "error=${MAX_SECURITY_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=sqale_rating" -d "op=GT" -d "error=${MAX_SQALE_RATING}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=security_hotspots_reviewed" -d "op=LT" -d "error=${MIN_HOTSPOTS_REVIEWED}"
+          curl -s -X POST "http://localhost:9000/api/qualitygates/create_condition" \
+            -u "admin:${SONAR_PASS}" -d "gateName=CIGate" -d "metric=duplicated_lines_density" -d "op=GT" -d "error=${MAX_DUPLICATION}"
+
+          echo "MIN_COVERAGE=${MIN_COVERAGE}" >> $GITHUB_ENV
+          echo "MAX_RELIABILITY_RATING=${MAX_RELIABILITY_RATING}" >> $GITHUB_ENV
+          echo "MAX_SECURITY_RATING=${MAX_SECURITY_RATING}" >> $GITHUB_ENV
+          echo "MAX_SQALE_RATING=${MAX_SQALE_RATING}" >> $GITHUB_ENV
+          echo "MIN_HOTSPOTS_REVIEWED=${MIN_HOTSPOTS_REVIEWED}" >> $GITHUB_ENV
+          echo "MAX_DUPLICATION=${MAX_DUPLICATION}" >> $GITHUB_ENV
+
+      - name: Ejecutar escaneo en SonarQube
+        run: |
+          npm run sonar -- \
+            -Dsonar.host.url="http://localhost:9000" \
+            -Dsonar.token="${{ env.SONAR_GENERATED_TOKEN }}" \
+            -Dsonar.qualitygate.wait=true
+      
+      - name: Generar resumen de SonarQube
+        if: always()
+        run: |
+          sleep 3
+          # 1. Obtener estado del Quality Gate desde SonarQube
+          QG_JSON=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/qualitygates/project_status?projectKey=tp-pds-grupo-4")
+          QG_STATUS=$(echo "$QG_JSON" | jq -r '.projectStatus.status // "UNKNOWN"')
+
+          # 2. Obtener métricas del componente
+          MEASURES=$(curl -s -u "${{ env.SONAR_GENERATED_TOKEN }}:" "http://localhost:9000/api/measures/component?component=tp-pds-grupo-4&metricKeys=coverage,bugs,vulnerabilities,code_smells,duplicated_lines_density,ncloc,sqale_index,security_hotspots")
+
+          COV=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="coverage") | .value // "N/A"')
+          BUGS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="bugs") | .value // "0"')
+          VULN=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="vulnerabilities") | .value // "0"')
+          SMELLS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="code_smells") | .value // "0"')
+          DUP=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="duplicated_lines_density") | .value // "0"')
+          LINES=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="ncloc") | .value // "0"')
+          DEBT=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="sqale_index") | .value // "0"')
+          HOTSPOTS=$(echo "$MEASURES" | jq -r '.component.measures[]? | select(.metric=="security_hotspots") | .value // "0"')
+
+          # 3. Leer evaluación real devuelta por SonarQube para el estado de la corrida
+          COV_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="coverage") | .status // "OK"')
+          REL_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="reliability_rating") | .status // "OK"')
+          SEC_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_rating") | .status // "OK"')
+          SQA_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="sqale_rating") | .status // "OK"')
+          DUP_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="duplicated_lines_density") | .status // "OK"')
+          HOT_COND=$(echo "$QG_JSON" | jq -r '.projectStatus.conditions[]? | select(.metricKey=="security_hotspots_reviewed") | .status // "OK"')
+
+          # Asignar íconos de estado de corrida
+          [ "$COV_COND" = "ERROR" ] && COV_STATE="❌" || COV_STATE="✅"
+          [ "$REL_COND" = "ERROR" ] && BUGS_STATE="❌" || BUGS_STATE="✅"
+          [ "$SEC_COND" = "ERROR" ] && VULN_STATE="❌" || VULN_STATE="✅"
+          [ "$SQA_COND" = "ERROR" ] && SMELLS_STATE="❌" || SMELLS_STATE="✅"
+          [ "$DUP_COND" = "ERROR" ] && DUP_STATE="❌" || DUP_STATE="✅"
+
+          if [ "$HOTSPOTS" = "0" ] || [ "$HOT_COND" != "ERROR" ]; then
+            HOTSPOTS_STATE="✅"
+          else
+            HOTSPOTS_STATE="❌"
+          fi
+
+          [ "$QG_STATUS" = "OK" ] && QG_ICON="✅ PASSED" || QG_ICON="❌ FAILED"
+
+          [ "${{ env.MIN_COVERAGE }}" -ge 80 ] && COV_ALIGN="Alineado ✅" || COV_ALIGN="Flexibilizado ⚠️"
+          [ "${{ env.MAX_RELIABILITY_RATING }}" -le 1 ] && REL_ALIGN="Alineado ✅" || REL_ALIGN="Flexibilizado ⚠️"
+          [ "${{ env.MAX_SECURITY_RATING }}" -le 1 ] && SEC_ALIGN="Alineado ✅" || SEC_ALIGN="Flexibilizado ⚠️"
+          [ "${{ env.MAX_SQALE_RATING }}" -le 1 ] && SQA_ALIGN="Alineado ✅" || SQA_ALIGN="Flexibilizado ⚠️"
+          [ "${{ env.MAX_DUPLICATION }}" -le 3 ] && DUP_ALIGN="Alineado ✅" || DUP_ALIGN="Flexibilizado ⚠️"
+          [ "${{ env.MIN_HOTSPOTS_REVIEWED }}" -ge 100 ] && HOT_ALIGN="Alineado ✅" || HOT_ALIGN="Flexibilizado ⚠️"
+
+          case "${{ env.MAX_RELIABILITY_RATING }}" in 1) REL_L="A";; 2) REL_L="B";; 3) REL_L="C";; 4) REL_L="D";; 5) REL_L="E";; *) REL_L="${{ env.MAX_RELIABILITY_RATING }}";; esac
+          case "${{ env.MAX_SECURITY_RATING }}" in 1) SEC_L="A";; 2) SEC_L="B";; 3) SEC_L="C";; 4) SEC_L="D";; 5) SEC_L="E";; *) SEC_L="${{ env.MAX_SECURITY_RATING }}";; esac
+          case "${{ env.MAX_SQALE_RATING }}" in 1) SQA_L="A";; 2) SQA_L="B";; 3) SQA_L="C";; 4) SQA_L="D";; 5) SQA_L="E";; *) SQA_L="${{ env.MAX_SQALE_RATING }}";; esac
+
+          echo "## 📊 Resumen del Análisis de SonarQube" >> $GITHUB_STEP_SUMMARY
+          echo "### Resultado Quality Gate: **${QG_ICON}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Métrica | Valor Actual | Umbral Configurado (CIGate) | Estándar Sonar way | Alineación CIGate | Estado Corrida |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- | --- | --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟢 **Cobertura de Código** | **${COV}%** | ≥ ${{ env.MIN_COVERAGE }}% | ≥ 80% (Código Nuevo) | ${COV_ALIGN} | ${COV_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐛 **Bugs (Reliability)** | **${BUGS}** | Rating ≤ ${{ env.MAX_RELIABILITY_RATING }} (${REL_L}) | Rating A (Código Nuevo) | ${REL_ALIGN} | ${BUGS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 **Vulnerabilidades (Security)** | **${VULN}** | Rating ≤ ${{ env.MAX_SECURITY_RATING }} (${SEC_L}) | Rating A (Código Nuevo) | ${SEC_ALIGN} | ${VULN_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧹 **Code Smells (Maintainability)** | **${SMELLS}** | Rating ≤ ${{ env.MAX_SQALE_RATING }} (${SQA_L}) | Rating A (Código Nuevo) | ${SQA_ALIGN} | ${SMELLS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⏱️ **Deuda Técnica** | **${DEBT} min** | - | - | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📑 **Duplicación de Código** | **${DUP}%** | ≤ ${{ env.MAX_DUPLICATION }}% | ≤ 3% (Código Nuevo) | ${DUP_ALIGN} | ${DUP_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🛡️ **Hotspots de Seguridad** | **${HOTSPOTS}** | ≥ ${{ env.MIN_HOTSPOTS_REVIEWED }}% revisados | 100% (Código Nuevo) | ${HOT_ALIGN} | ${HOTSPOTS_STATE} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 **Líneas de Código** | **${LINES}** | - | - | - | ℹ️ |" >> $GITHUB_STEP_SUMMARY
+          cp $GITHUB_STEP_SUMMARY reporte-sonarqube.md
+      
+      - name: Subir reporte como artefacto descargable
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-sonarqube
+          path: reporte-sonarqube.md
+          retention-days: 15
