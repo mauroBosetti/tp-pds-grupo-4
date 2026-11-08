@@ -4,14 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/index.js"
+    "dev": "node --watch src/server.js",
+    "test": "cucumber-js",
+    "test:coverage":  "c8 --exclude='features/**' --reporter=lcov cucumber-js",
+    "start": "node src/server.js",
+    "db:reset": "node scripts/reset-db.js dev",
+    "db:reset:test": "node scripts/reset-db.js test"
   },
   "keywords": [],
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.2.1",
+    "c8": "^12.0.0",
+    "supertest": "^7.2.2"
   }
 }

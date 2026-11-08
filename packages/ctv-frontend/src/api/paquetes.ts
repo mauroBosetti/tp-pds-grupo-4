@@ -1,0 +1,148 @@
+import { leerTokenUsuario } from '@/auth/tokenUsuario'
+
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
+export interface Vuelo {
+  id_vuelo: number
+  aerolinea: string
+  origen: string
+  destino: string
+  fecha: string
+  hora: string
+  capacidad: number
+  disponibilidad: number
+}
+
+export interface DatosNuevoPaquete {
+  nombre: string
+  precio: number
+  origen: string
+  destino: string
+  vueloIdaId: number
+  vueloVueltaId: number
+}
+
+export interface Paquete extends DatosNuevoPaquete {
+  id: string
+  agenciaId: string
+}
+
+export interface PaqueteConAgencia extends Paquete {
+  agencia: { id: string; nombre: string }
+}
+
+export interface ResumenDePuntajes {
+  puntajePromedio: number | null
+  cantidadDePuntajes: number
+}
+
+export interface PaqueteDeCatalogo extends PaqueteConAgencia, ResumenDePuntajes {}
+
+export interface ComentarioDePaquete {
+  autor: string
+  puntaje: number | null
+  comentario: string
+}
+
+export interface DetalleDePaquete extends PaqueteDeCatalogo {
+  comentarios: ComentarioDePaquete[]
+}
+
+export class SinAutorizacion extends Error {}
+
+function encabezadosConToken(): HeadersInit {
+  const token = leerTokenUsuario()
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
+
+export async function listarPaquetes(): Promise<Paquete[]> {
+  const respuesta = await fetch(`${API_URL}/api/package`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudieron obtener los paquetes')
+  }
+  return respuesta.json()
+}
+
+export async function listarCatalogo(): Promise<PaqueteDeCatalogo[]> {
+  const respuesta = await fetch(`${API_URL}/api/package/catalogo`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudo obtener el catálogo')
+  }
+  return respuesta.json()
+}
+
+export async function buscarVuelos(origen: string, destino: string): Promise<Vuelo[]> {
+  const parametros = new URLSearchParams({ origen, destino })
+  const respuesta = await fetch(`${API_URL}/api/package/vuelos?${parametros}`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudieron obtener los vuelos')
+  }
+  return respuesta.json()
+}
+
+export async function crearPaquete(datos: DatosNuevoPaquete): Promise<Paquete> {
+  const respuesta = await fetch(`${API_URL}/api/package`, {
+    method: 'POST',
+    headers: encabezadosConToken(),
+    body: JSON.stringify(datos),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudo crear el paquete')
+  }
+  return respuesta.json()
+}
+
+export interface VentaRealizada {
+  id_venta: number
+  pasajero: string
+  ids_vuelo: number[]
+}
+
+export async function comprarPaquete(paqueteId: string): Promise<VentaRealizada> {
+  const respuesta = await fetch(`${API_URL}/api/package/${paqueteId}/comprar`, {
+    method: 'POST',
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    const { error } = await respuesta.json().catch(() => ({ error: undefined }))
+    throw new Error(error ?? 'No se pudo completar la compra')
+  }
+  return respuesta.json()
+}
+
+export async function obtenerDetalleDePaquete(paqueteId: string): Promise<DetalleDePaquete> {
+  const respuesta = await fetch(`${API_URL}/api/package/${paqueteId}`, {
+    headers: encabezadosConToken(),
+  })
+  if (respuesta.status === 401) {
+    throw new SinAutorizacion('Sesión expirada')
+  }
+  if (!respuesta.ok) {
+    throw new Error('No se pudo obtener el paquete')
+  }
+  return respuesta.json()
+}

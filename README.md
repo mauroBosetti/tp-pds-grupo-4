@@ -1,7 +1,54 @@
 # TP-PDS-GRUPO-4
 
+## Sonar
+```
+docker compose up sonarqube
+```
+* http://localhost:9000/
+* usr and pass: admin admin
+* projects -> create local project
+* project display name: tp-pds-grupo-4
+* branch: dev -> next
+* follow instance default -> create project
+* locally -> generate -> continue
+* para generar coverage
+``` 
+docker compose up db-vuelos-test
+npm run test:coverage
+``` 
+
+``` 
+bash
+> npm run sonar -- -Dsonar.token=TOKEN_GENERADO
+```
+``` 
+powershell
+> $env:SONAR_TOKEN="TU_TOKEN"
+> npm run sonar
+```
+## run full project
+
+### W/ Docker Compose
+* ```docker compose up```
+* ```localhost:8080```
+
 ## api-vuelos
 
+```npm run db:reset -w api-vuelos```
+
+```npm run db:reset:test -w api-vuelos```
+
+#### cucumber test
+
+```docker compose up -d db-vuelos-test```
+
+```export TEST_DATABASE_URL=postgresql://vuelos_test:vuelos_test@localhost:5434/vuelos_test```
+
+```npm run test -w api-vuelos```
+
+   * para obtener IP local
+```podman machine ssh -- ip -4 addr show eth0```
+ 
 ## ctv-backend
 
 #### ORM prisma 7
