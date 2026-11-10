@@ -1,5 +1,20 @@
 # TP-PDS-GRUPO-4
 
+## run full project
+
+### W/ Docker Compose
+   * docker compose up
+   * http://localhost:8080/admin
+   * http://localhost:8080/login
+
+### imagenes docker
+   * grafana
+   * influxdb
+   * sonarqube
+   * api-vuelos
+   * ctv-backend
+   * ctv-frontend
+
 ## K6
    * npm run dev
    * npm run seed:k6
@@ -10,6 +25,23 @@
    * npm run test:k6:sobreventa
 
    * npm run seed:k6:clean
+
+   ### influx + graphana
+
+   * http://localhost:3001
+   * admin | admin
+   * Connections > Add new > (search) InfluxDB (Data Sources) > Add new data source
+   
+   #### configuracion de plugin
+      * http:url: http://influxdb:8086
+      * InfluxDB:Details > Database : k6 
+      * Save & test
+
+   * Dashboards > View as list 
+   * Dashboards > New > Import
+   * Upload dashboard JSON file | Import via dashboard JSON model 
+      * .\k6\dashboard-influx.json > Load
+      * DS_INFLUXDB (seleccionar) > Import
 
 ## Sonar
 ```
@@ -37,12 +69,6 @@ powershell
 > $env:SONAR_TOKEN="TU_TOKEN"
 > npm run sonar
 ```
-## run full project
-
-### W/ Docker Compose
-* ```docker compose up```
-* ```localhost:8080```
-
 ## api-vuelos
 
 ```npm run db:reset -w api-vuelos```

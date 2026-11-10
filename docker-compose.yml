@@ -1,5 +1,24 @@
 services:
   
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    environment:
+      - INFLUXDB_DB=k6
+    ports:
+      - "8086:8086"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - influxdb
+      
   k6:
     image: grafana/k6:latest
     volumes:

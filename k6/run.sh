@@ -16,4 +16,7 @@ docker compose run --rm \
   -e CLIENTES="${CLIENTES}" \
   -e BASE_URL="${BASE_URL:-http://ctv-backend:3000}" \
   -e VUELOS_URL="${VUELOS_URL:-http://api-vuelos:4000}" \
-  k6 run --summary-export="resultados/${ESCENARIO}-resumen.json" "${ESCENARIO}.js"
+  k6 run \
+    --out influxdb=http://influxdb:8086/k6 \
+    --summary-export="resultados/${ESCENARIO}-resumen.json" \
+    "${ESCENARIO}.js"
