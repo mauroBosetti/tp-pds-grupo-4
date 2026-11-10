@@ -1,5 +1,16 @@
 # TP-PDS-GRUPO-4
 
+## K6
+   * npm run dev
+   * npm run seed:k6
+
+   * npm run test:k6:smoke
+   * npm run test:k6:load
+   * npm run test:k6:stress
+   * npm run test:k6:sobreventa
+
+   * npm run seed:k6:clean
+
 ## Sonar
 ```
 docker compose up sonarqube
