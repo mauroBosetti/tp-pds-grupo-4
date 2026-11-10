@@ -48,10 +48,14 @@ async function crearAdministradores() {
 
 async function main() {
   console.log('Limpiando base de datos...');
-  // Borra los datos existentes de atrás hacia adelante (hijos primero, padres después)
+  await prisma.compra.deleteMany();
+  await prisma.opinion.deleteMany();
+  await prisma.usuarioAdministrador.deleteMany();
   await prisma.usuarioAgencia.deleteMany();
+  await prisma.usuarioCliente.deleteMany();
   await prisma.paquete.deleteMany();
   await prisma.agencia.deleteMany();
+  await prisma.cuenta.deleteMany();
 
   console.log('Insertando nuevos datos de prueba...');
   await prisma.agencia.create({
