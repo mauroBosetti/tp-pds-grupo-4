@@ -9,7 +9,14 @@
     "sonar": "sonar-scanner-npm",
     "test:coverage": "npm run test:coverage -ws --if-present",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "dev": "docker compose up -d",
+    "seed:k6": "bash seeds/seed.sh cargar",
+    "seed:k6:clean": "bash seeds/seed.sh limpiar",
+    "test:k6:smoke": "bash k6/run.sh smoke",
+    "test:k6:load": "bash k6/run.sh load",
+    "test:k6:stress": "bash k6/run.sh stress",
+    "test:k6:sobreventa": "bash k6/run.sh sobreventa"
   },
   "dependencies": {
     "swagger-ui-express": "^5.0.1",
