@@ -1,191 +1,875 @@
 openapi: 3.0.0
 info:
   title: API Compra Tu Viaje (CTV)
-  version: 1.0.0
+  version: 1.1.0
   description: >
     Documentación de la API Rest para la aplicación web Compra Tu Viaje (CTV),
     solicitada por la Cámara Argentina de Turismo. Incluye los endpoints del Backend
-    principal y los endpoints requeridos para la API externa de Vuelos.
+    principal y los endpoints de la API externa de Vuelos, que CTV consume para
+    consultar vuelos y registrar ventas.
+
+    Perfiles de usuario:
+    - **Administrador**: da de alta agencias.
+    - **Agencia**: publica paquetes y consulta sus paquetes y vuelos disponibles.
+    - **Cliente**: compra paquetes, consulta su historial de compras y opina sobre los paquetes que compró.
+  contact:
+    name: Grupo 4
 servers:
   - url: http://localhost:3000/api
-    description: Servidor de CTV
-  - url: http://localhost:4000/api
-    description: Servidor de API de vuelos
+    description: Backend de CTV
+  - url: http://localhost:4001/api
+    description: API externa de Vuelos
 tags:
   - name: Autenticación
-    description: Gestión de registro y login de usuarios
-  - name: API Vuelos (Externa)
-    description: API externa simulada para consulta y venta de vuelos
-  - name: Paquetes
-    description: ABM y consulta de paquetes turísticos
-  - name: Favoritos y Reseñas
-    description: Funcionalidades para Compradores (guardar interés, puntajes, comentarios)
-  - name: Compras
-    description: Registro y consulta de ventas de paquetes
+    description: Login de administradores, agencias y clientes, y registro de agencias y clientes
   - name: Agencias
-    description: ABM de Agencias (Uso exclusivo Administrador)
-  - name: Usuarios
-    description: ABM de Usuarios del sistema (Uso exclusivo Administrador)
-  - name: Reportes
-    description: Estadísticas y métricas del sistema
+    description: Alta y consulta de agencias (alta exclusiva de Administrador)
+  - name: Paquetes
+    description: Publicación, catálogo, detalle y compra de paquetes turísticos
+  - name: Compras
+    description: Historial de compras del cliente
+  - name: Opiniones
+    description: Puntajes y comentarios de clientes sobre paquetes que compraron
+  - name: API Vuelos (Externa)
+    description: API externa de vuelos, consumida por CTV para buscar vuelos y registrar ventas
 components:
+  parameters:
+    IdDePaquete:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Ingrese el token JWT (Requerido para endpoints protegidos según perfil).
+      description: >
+        Token JWT obtenido en el login correspondiente al perfil. Expira a las 8 horas.
+        Cada endpoint protegido acepta solo los perfiles indicados en su descripción.
   schemas:
-    Usuario:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: No autenticado
+    CredencialesDeAcceso:
+      type: object
+      required:
+        - email
+        - clave
+      properties:
+        email:
+          type: string
+          format: email
+          example: agencia@ejemplo.com
+        clave:
+          type: string
+          format: password
+    RegistroCliente:
+      type: object
+      required:
+        - nombre
+        - email
+        - clave
+      properties:
+        nombre:
+          type: string
+          example: Juan Pérez
+        email:
+          type: string
+          format: email
+        clave:
+          type: string
+          format: password
+    RegistroAgencia:
+      type: object
+      required:
+        - nombre
+        - email
+        - clave
+        - codigoDeGrupo
+      properties:
+        nombre:
+          type: string
+          example: Juan Pérez
+        email:
+          type: string
+          format: email
+        clave:
+          type: string
+          format: password
+        codigoDeGrupo:
+          type: string
+          description: Código de 8 dígitos de la agencia a la que se asocia el usuario.
+          example: '04827193'
+    UsuarioRegistrado:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         nombre:
           type: string
-        email:
+    UsuarioAgenciaRegistrado:
+      allOf:
+        - $ref: '#/components/schemas/UsuarioRegistrado'
+        - type: object
+          properties:
+            agenciaId:
+              type: string
+              format: uuid
+    RespuestaLoginUsuario:
+      type: object
+      properties:
+        token:
           type: string
-        rol:
+          description: JWT a enviar en el header Authorization como `Bearer <token>`.
+        usuario:
+          type: object
+          properties:
+            nombre:
+              type: string
+            email:
+              type: string
+              format: email
+            rol:
+              type: string
+              enum: [agencia, cliente]
+    RespuestaLoginAdministrador:
+      type: object
+      properties:
+        token:
           type: string
-          enum: [COMPRADOR, AGENCIA, ADMINISTRADOR]
+          description: JWT a enviar en el header Authorization como `Bearer <token>`.
+        administrador:
+          type: object
+          properties:
+            nombre:
+              type: string
+            email:
+              type: string
+              format: email
+    Agencia:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        codigoDeGrupo:
+          type: string
+          description: Código de 8 dígitos que las agencias usan para registrar a sus usuarios.
+          example: '04827193'
     Vuelo:
       type: object
+      description: Vuelo devuelto por la API externa de Vuelos. Solo se listan vuelos con disponibilidad mayor a 0.
       properties:
         id_vuelo:
           type: integer
+          example: 1
         aerolinea:
           type: string
+          example: Aerolíneas Argentinas
+        origen:
+          type: string
+          example: Buenos Aires
+        destino:
+          type: string
+          example: Madrid
         fecha:
           type: string
           format: date
+          example: '2027-07-01'
         hora:
           type: string
-          format: time
+          description: Hora de salida en formato HH:MM:SS (UTC).
+          example: '10:00:00'
+        capacidad:
+          type: integer
+          example: 150
+        disponibilidad:
+          type: integer
+          example: 100
+    NuevoPaquete:
+      type: object
+      required:
+        - nombre
+        - precio
+        - origen
+        - destino
+        - vueloIdaId
+        - vueloVueltaId
+      properties:
+        nombre:
+          type: string
+          example: Escapada a Madrid
+        precio:
+          type: integer
+          minimum: 1
+          description: Precio entero positivo.
+          example: 1200
+        origen:
+          type: string
+          example: Buenos Aires
+        destino:
+          type: string
+          example: Madrid
+        vueloIdaId:
+          type: integer
+          description: id_vuelo del vuelo de ida, según la API externa de Vuelos.
+          example: 1
+        vueloVueltaId:
+          type: integer
+          description: id_vuelo del vuelo de vuelta, según la API externa de Vuelos.
+          example: 2
+    Paquete:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+        precio:
+          type: integer
         origen:
           type: string
         destino:
           type: string
-        capacidad:
+        vueloIdaId:
           type: integer
-        disponibilidad:
+        vueloVueltaId:
           type: integer
-    Hotel:
+        agenciaId:
+          type: string
+          format: uuid
+    PaqueteConAgencia:
+      allOf:
+        - $ref: '#/components/schemas/Paquete'
+        - type: object
+          properties:
+            agencia:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                nombre:
+                  type: string
+            puntajePromedio:
+              type: number
+              nullable: true
+              description: Promedio de puntajes (1 a 5) redondeado a un decimal. Null si no hay puntajes.
+              example: 4.5
+            cantidadDePuntajes:
+              type: integer
+              example: 2
+    ComentarioDePaquete:
       type: object
       properties:
-        id_hotel:
+        autor:
+          type: string
+          description: Nombre del cliente que escribió el comentario.
+        puntaje:
           type: integer
-        nombre:
+          nullable: true
+        comentario:
           type: string
-        destino:
-          type: string
-        foto:
-          type: string
-          format: uri
-        descripcion:
-          type: string
-    Paquete:
+    DetalleDePaquete:
+      allOf:
+        - $ref: '#/components/schemas/PaqueteConAgencia'
+        - type: object
+          properties:
+            comentarios:
+              type: array
+              items:
+                $ref: '#/components/schemas/ComentarioDePaquete'
+    OpinionResumida:
       type: object
+      nullable: true
+      description: Opinión del cliente sobre el paquete, o null si todavía no opinó.
       properties:
-        id_paquete:
-          type: integer
-        id_agencia:
-          type: integer
-        vuelo_ida:
-          $ref: '#/components/schemas/Vuelo'
-        vuelo_vuelta:
-          $ref: '#/components/schemas/Vuelo'
-        hotel:
-          $ref: '#/components/schemas/Hotel'
-        precio:
-          type: number
-          format: float
-        destino:
+        comentario:
           type: string
+          nullable: true
+        puntaje:
+          type: integer
+          nullable: true
     Compra:
       type: object
       properties:
-        id_paquete:
-          type: integer
-        id_comprador:
-          type: integer
-        fecha_compra:
+        id:
+          type: string
+          format: uuid
+        fecha:
           type: string
           format: date-time
-    VentaVuelo:
-      type: object
-      required:
-        - id_vuelo
-        - pasajero
-      properties:
-        id_vuelo:
-          type: integer
-        pasajero:
+        usuarioClienteId:
           type: string
-    Reseña:
+          format: uuid
+        paqueteId:
+          type: string
+          format: uuid
+        paquete:
+          $ref: '#/components/schemas/PaqueteConAgencia'
+        opinion:
+          $ref: '#/components/schemas/OpinionResumida'
+    NuevaOpinion:
       type: object
-      required:
-        - puntaje
+      description: >
+        Debe incluir al menos un puntaje o un comentario no vacío. El puntaje, si se envía,
+        es un entero entre 1 y 5.
       properties:
         puntaje:
           type: integer
-          minimum: 0
-          maximum: 10
+          minimum: 1
+          maximum: 5
+          nullable: true
+          example: 5
         comentario:
           type: string
+          nullable: true
+          example: Excelente viaje, muy recomendable.
+    OpinionGuardada:
+      type: object
+      properties:
+        paqueteId:
+          type: string
+          format: uuid
+        comentario:
+          type: string
+          nullable: true
+        puntaje:
+          type: integer
+          nullable: true
+    VentaDeVuelos:
+      type: object
+      properties:
+        id_venta:
+          type: integer
+          example: 15
+        pasajero:
+          type: string
+          example: Juan Pérez
+        ids_vuelo:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: integer
+          example: [1, 2]
+    NuevaVentaDeVuelos:
+      type: object
+      required:
+        - ids_vuelo
+        - pasajero
+      properties:
+        ids_vuelo:
+          type: array
+          description: Exactamente dos id_vuelo distintos (ida y vuelta).
+          minItems: 2
+          maxItems: 2
+          items:
+            type: integer
+          example: [1, 2]
+        pasajero:
+          type: string
+          example: Juan Pérez
 paths:
-  /auth/registro:
+  /auth/administrador/login:
     post:
       tags:
         - Autenticación
-      summary: Registrar un nuevo usuario (Comprador)
+      summary: Iniciar sesión como administrador
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                nombre:
-                  type: string
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        '201':
-          description: Usuario registrado exitosamente
-  /auth/login:
-    post:
-      tags:
-        - Autenticación
-      summary: Iniciar sesión
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
+              $ref: '#/components/schemas/CredencialesDeAcceso'
       responses:
         '200':
-          description: Login exitoso, retorna JWT
+          description: Login exitoso
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
+                $ref: '#/components/schemas/RespuestaLoginAdministrador'
+        '401':
+          description: Email o contraseña incorrectos, o la cuenta no es de un administrador
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/agencia/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Iniciar sesión como usuario de agencia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredencialesDeAcceso'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaLoginUsuario'
+        '401':
+          description: Email o contraseña incorrectos, o la cuenta no es de un usuario de agencia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/agencia/registro:
+    post:
+      tags:
+        - Autenticación
+      summary: Registrar un usuario de agencia usando el código de grupo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroAgencia'
+      responses:
+        '201':
+          description: Usuario de agencia registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioAgenciaRegistrado'
+        '400':
+          description: Faltan datos o el código de grupo no corresponde a ninguna agencia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ya existe una cuenta con ese email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/cliente/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Iniciar sesión como cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredencialesDeAcceso'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaLoginUsuario'
+        '401':
+          description: Email o contraseña incorrectos, o la cuenta no es de un cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/cliente/registro:
+    post:
+      tags:
+        - Autenticación
+      summary: Registrar un cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroCliente'
+      responses:
+        '201':
+          description: Cliente registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioRegistrado'
+        '400':
+          description: Faltan nombre, email o contraseña
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ya existe una cuenta con ese email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /agencias:
+    post:
+      tags:
+        - Agencias
+      summary: Crear una agencia (Perfil Administrador)
+      description: Genera automáticamente el código de grupo de la agencia.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+              properties:
+                nombre:
+                  type: string
+                  example: Viajes del Sur
+      responses:
+        '201':
+          description: Agencia creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agencia'
+        '400':
+          description: El nombre es requerido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Administrador
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /agencias/{id}:
+    get:
+      tags:
+        - Agencias
+      summary: Obtener una agencia por id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Agencia encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agencia'
+        '404':
+          description: Agencia no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /package:
+    get:
+      tags:
+        - Paquetes
+      summary: Listar los paquetes de la agencia autenticada (Perfil Agencia)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Paquetes publicados por la agencia
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paquete'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Agencia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Paquetes
+      summary: Crear un paquete (Perfil Agencia)
+      description: Valida los datos del paquete y lo asocia a la agencia del token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevoPaquete'
+      responses:
+        '201':
+          description: Paquete creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paquete'
+        '400':
+          description: Datos del paquete inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Agencia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /package/catalogo:
+    get:
+      tags:
+        - Paquetes
+      summary: Listar el catálogo de paquetes (Perfil Agencia o Cliente)
+      description: Devuelve todos los paquetes con la agencia que los publica y el resumen de puntajes.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Catálogo de paquetes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaqueteConAgencia'
+        '401':
+          description: Token ausente o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /package/vuelos:
+    get:
+      tags:
+        - Paquetes
+      summary: Consultar vuelos disponibles en la API externa (Perfil Agencia)
+      description: Consulta la API externa de Vuelos y devuelve solo vuelos con disponibilidad mayor a 0. Sirve para armar paquetes.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: origen
+          in: query
+          required: true
+          schema:
+            type: string
+          example: Buenos Aires
+        - name: destino
+          in: query
+          required: true
+          schema:
+            type: string
+          example: Madrid
+      responses:
+        '200':
+          description: Vuelos disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vuelo'
+        '400':
+          description: Falta origen o destino
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Agencia
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: No se pudo consultar la API de vuelos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /package/{id}:
+    get:
+      tags:
+        - Paquetes
+      summary: Obtener el detalle de un paquete (Perfil Agencia o Cliente)
+      description: Incluye la agencia, el resumen de puntajes y los comentarios de los clientes.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdDePaquete'
+      responses:
+        '200':
+          description: Detalle del paquete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetalleDePaquete'
+        '401':
+          description: Token ausente o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El paquete no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /package/{id}/comprar:
+    post:
+      tags:
+        - Paquetes
+      summary: Comprar un paquete (Perfil Cliente)
+      description: >
+        Registra la venta de los dos vuelos del paquete en la API externa de Vuelos
+        y, si la venta se concreta, guarda la compra del cliente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdDePaquete'
+      responses:
+        '201':
+          description: Compra realizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentaDeVuelos'
+        '400':
+          description: La API de vuelos rechazó la venta por datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El paquete o el cliente no existen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Alguno de los vuelos no tiene disponibilidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: No se pudo consultar o registrar la venta en la API de vuelos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /compras:
+    get:
+      tags:
+        - Compras
+      summary: Consultar el historial de compras del cliente (Perfil Cliente)
+      description: Ordenado por fecha descendente. Cada compra incluye la opinión del cliente sobre ese paquete, si existe.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Compras del cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Compra'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El cliente no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /review/{paqueteId}:
+    put:
+      tags:
+        - Opiniones
+      summary: Puntuar y comentar un paquete comprado (Perfil Cliente)
+      description: Crea o reemplaza la opinión del cliente sobre un paquete que compró.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paqueteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaOpinion'
+      responses:
+        '200':
+          description: Opinión guardada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpinionGuardada'
+        '400':
+          description: Puntaje fuera de rango o sin puntaje ni comentario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token ausente, inválido o de un perfil distinto a Cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: El cliente no compró el paquete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El cliente no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /vuelos:
     get:
       tags:
         - API Vuelos (Externa)
       summary: Consultar vuelos disponibles
-      description: Solo retorna vuelos con disponibilidad > 0.
+      description: Devuelve solo vuelos con disponibilidad mayor a 0. Los filtros son opcionales.
+      servers:
+        - url: http://localhost:4001/api
+          description: API externa de Vuelos
       parameters:
         - name: origen
           in: query
@@ -197,6 +881,7 @@ paths:
             type: string
         - name: fecha
           in: query
+          description: Fecha de salida en formato YYYY-MM-DD.
           schema:
             type: string
             format: date
@@ -209,196 +894,57 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Vuelo'
+        '500':
+          description: Error consultando vuelos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /venta:
     post:
       tags:
         - API Vuelos (Externa)
-      summary: Registrar venta de un vuelo
-      description: Aloca el pasajero a un vuelo y decrementa su disponibilidad.
+      summary: Registrar la venta de dos vuelos
+      description: >
+        Descuenta una plaza de cada uno de los dos vuelos y registra la venta a nombre del pasajero.
+        Todo ocurre en una transacción: si un vuelo no tiene disponibilidad, no se vende ninguno.
+      servers:
+        - url: http://localhost:4001/api
+          description: API externa de Vuelos
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VentaVuelo'
+              $ref: '#/components/schemas/NuevaVentaDeVuelos'
       responses:
         '200':
-          description: Venta de vuelo registrada exitosamente
-  /paquetes:
-    get:
-      tags:
-        - Paquetes
-      summary: Listar paquetes disponibles
-      description: Buscador avanzado con filtros. Las compras se realizan de a un paquete por vez.
-      parameters:
-        - name: palabra_clave
-          in: query
-          schema:
-            type: string
-        - name: destino
-          in: query
-          schema:
-            type: string
-        - name: precio_min
-          in: query
-          schema:
-            type: number
-        - name: precio_max
-          in: query
-          schema:
-            type: number
-      responses:
-        '200':
-          description: Lista de paquetes
+          description: Venta registrada
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Paquete'
-    post:
-      tags:
-        - Paquetes
-      summary: Crear un paquete (Perfil Agencia)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Paquete'
-      responses:
-        '201':
-          description: Paquete creado
-  /favoritos:
-    get:
-      tags:
-        - Favoritos y Reseñas
-      summary: Obtener paquetes guardados (Perfil Comprador o Admin)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Lista de paquetes favoritos
-    post:
-      tags:
-        - Favoritos y Reseñas
-      summary: Guardar un paquete como favorito (Perfil Comprador)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id_paquete:
-                  type: integer
-      responses:
-        '201':
-          description: Paquete guardado
-  /favoritos/{id_paquete}/reseña:
-    post:
-      tags:
-        - Favoritos y Reseñas
-      summary: Agregar puntaje y comentario a un viaje de interés
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id_paquete
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Reseña'
-      responses:
-        '201':
-          description: Reseña guardada
-  /compras:
-    get:
-      tags:
-        - Compras
-      summary: Consultar historial de compras / ventas
-      description: Permite a las Agencias ver sus ventas y a Administradores ver todas.
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Lista de compras realizadas con el precio fijado en el momento.
+                $ref: '#/components/schemas/VentaDeVuelos'
+        '400':
+          description: Pedido inválido (ids repetidos, cantidad distinta de dos, pasajero vacío)
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compra'
-    post:
-      tags:
-        - Compras
-      summary: Comprar un paquete (Perfil Comprador)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id_paquete:
-                  type: integer
-      responses:
-        '201':
-          description: Compra realizada exitosamente
-  /agencias:
-    get:
-      tags:
-        - Agencias
-      summary: Listar agencias (Perfil Administrador)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Lista de agencias
-    post:
-      tags:
-        - Agencias
-      summary: Crear una agencia (Perfil Administrador)
-      security:
-        - bearerAuth: []
-      responses:
-        '201':
-          description: Agencia creada
-  /usuarios:
-    get:
-      tags:
-        - Usuarios
-      summary: Listar usuarios registrados (Perfil Administrador)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Lista de usuarios
-  /reportes/{rol}:
-    get:
-      tags:
-        - Reportes
-      summary: Obtener reportes del sistema (Perfil Administrador)
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: rol
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [top-compradores, top-destinos-rankeados, top-agencias, top-destinos-vendidos]
-      responses:
-        '200':
-          description: Reporte solicitado (Top 5)
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Algún vuelo no existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Algún vuelo no tiene disponibilidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error registrando la venta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
