@@ -20,12 +20,15 @@
    * npm run seed:k6
 
    * npm run test:k6:smoke
-   * npm run test:k6:load
-   * npm run test:k6:stress
-   * npm run test:k6:sobreventa
+   * npm run test:k6:load (VUS=30)
+   * npm run test:k6:stress (PICO=200)
+   * npm run test:k6:sobreventa (VUS=50, INTENTOS=200)
+   * npm run test:k6:sobreventa-vuelos (VUS=50, INTENTOS=200)
 
    * npm run seed:k6:clean
 
+   > se recomienda:
+   > * docker compose down sonarqube
    ### influx + graphana
 
    * http://localhost:3001
@@ -42,6 +45,14 @@
    * Upload dashboard JSON file | Import via dashboard JSON model 
       * .\k6\dashboard-influx.json > Load
       * DS_INFLUXDB (seleccionar) > Import
+
+   ### parametros bash
+      * VUS       cantidad de usuarios simultaneos (load, sobreventas, sobreventas-vuelos)
+      * PICO      cantidad maxima de usuarios virtuales (stress)
+      * INTENTOS  cantidad total de peticiones (sobreventas, sobreventas-vuelos)
+      * CLIENTES  pool de usuarios, por default 20. (todos)
+
+      > EX. VUS=100 bash k6/run.sh load
 
 ## Sonar
 ```
