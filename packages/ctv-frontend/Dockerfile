@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Install deps using the workspace's own manifest (built standalone)
 COPY package.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
 
 # Build the app
 COPY . .
