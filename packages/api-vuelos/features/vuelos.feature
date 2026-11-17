@@ -7,7 +7,7 @@ Feature: Consulta y venta de vuelos
     Then la respuesta no debe incluir el vuelo a "Paris"
     And la respuesta debe incluir el vuelo a "Madrid"
 
- Scenario: Una venta descuenta la disponibilidad de sus dos vuelos
+  Scenario: Una venta descuenta la disponibilidad de sus dos vuelos
     Given existe un vuelo de "Buenos Aires" a "Madrid" con disponibilidad 5
     And existe un vuelo de "Madrid" a "Buenos Aires" con disponibilidad 3
     When compro un pasaje para "Juan Perez" en los vuelos a "Madrid" y a "Buenos Aires"
@@ -55,3 +55,7 @@ Feature: Consulta y venta de vuelos
     And la disponibilidad del vuelo a "Madrid" debe ser 0
     And la disponibilidad del vuelo a "Buenos Aires" debe ser 0
     And deben existir 10 ventas registradas
+
+  Scenario: La respuesta conserva el request id que envía el consumidor
+    When consulto el listado de vuelos con el request id "abc-123"
+    Then la respuesta debe tener el encabezado "x-request-id" con valor "abc-123"

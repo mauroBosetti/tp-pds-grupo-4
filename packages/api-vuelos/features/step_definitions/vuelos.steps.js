@@ -140,3 +140,11 @@ Then("deben existir {int} ventas registradas", async function (esperadas) {
     // Cada venta debe tener exactamente sus 2 vuelos asociados.
     assert.equal(detalle.rows[0].n, esperadas * 2);
 });
+
+When("consulto el listado de vuelos con el request id {string}", async function (requestId) {
+    this.response = await request(app).get("/api/vuelos").set("x-request-id", requestId);
+});
+
+Then("la respuesta debe tener el encabezado {string} con valor {string}", function (nombre, valor) {
+    assert.equal(this.response.headers[nombre], valor);
+});
