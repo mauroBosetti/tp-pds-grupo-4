@@ -13,6 +13,7 @@ import {
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
 } from './paquetesServicio.js'
+import { logger } from '../logging/logger.js'
 
 const packageRouter: Router = Router()
 

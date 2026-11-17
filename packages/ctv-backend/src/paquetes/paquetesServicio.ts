@@ -14,6 +14,7 @@ import {
   buscarPaquetePorId,
   buscarPaqueteConAgencia,
 } from './paquetesRepositorio.js'
+import { logger } from '../logging/logger.js'
 
 export class PaqueteInexistente extends Error {
   constructor() {
@@ -109,6 +110,18 @@ export async function comprarPaquete(paqueteId: string, cuentaId: string) {
     [paquete.vueloIdaId, paquete.vueloVueltaId],
     usuarioCliente.nombre,
   )
-  await crearCompra({ usuarioClienteId: usuarioCliente.id, paqueteId })
+  
+  const datosDeLaCompra = {
+    idVenta: venta.id_venta,
+    paqueteId,
+    usuarioClienteId: usuarioCliente.id,
+  }
+  try {
+    await crearCompra({ usuarioClienteId: usuarioCliente.id, paqueteId })
+  } catch (error) {
+    logger.error({ err: error, ...datosDeLaCompra }, 'compra_inconsistente')
+    throw error
+  }
+  logger.info(datosDeLaCompra, 'compra_registrada')
   return venta
 }

@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:pretty": "tsx watch src/index.ts | pino-pretty",
     "build": "prisma generate && tsc",
     "migrate": "prisma migrate dev",
     "reset": "prisma migrate reset",

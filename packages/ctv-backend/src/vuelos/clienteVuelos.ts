@@ -1,3 +1,6 @@
+import { obtenerRequestId } from '../logging/contexto.js'
+import { logger } from '../logging/logger.js'
+
 const urlApiVuelos = process.env.API_VUELOS_URL ?? 'http://localhost:4001'
 
 export interface Vuelo {
@@ -11,6 +14,52 @@ export interface Vuelo {
   disponibilidad: number
 }
 
+interface OpcionesDeLlamada {
+  method?: string
+  body?: string
+}
+
+function encabezadosDeSalida(opciones: OpcionesDeLlamada): Record<string, string> {
+  const encabezados: Record<string, string> = {}
+  if (opciones.body) {
+    encabezados['Content-Type'] = 'application/json'
+  }
+  const requestId = obtenerRequestId()
+  if (requestId) {
+    encabezados['x-request-id'] = requestId
+  }
+  return encabezados
+}
+
+function nivelSegunEstado(estado: number) {
+  if (estado >= 500) return 'error'
+  if (estado >= 400) return 'warn'
+  return 'info'
+}
+
+async function llamarApiVuelos(
+  operacion: string,
+  ruta: string,
+  opciones: OpcionesDeLlamada = {},
+): Promise<Response> {
+  const inicio = performance.now()
+  const duracionMs = () => Math.round((performance.now() - inicio) * 10) / 10
+  try {
+    const respuesta = await fetch(`${urlApiVuelos}${ruta}`, {
+      ...opciones,
+      headers: encabezadosDeSalida(opciones),
+    })
+    logger[nivelSegunEstado(respuesta.status)](
+      { operacion, status: respuesta.status, duracionMs: duracionMs() },
+      'api_vuelos_respuesta',
+    )
+    return respuesta
+  } catch (error) {
+    logger.error({ err: error, operacion, duracionMs: duracionMs() }, 'api_vuelos_inaccesible')
+    throw error
+  }
+}
+
 export class ApiVuelosNoDisponible extends Error {
   constructor() {
     super('No se pudo consultar la API de vuelos')
@@ -20,7 +69,7 @@ export class ApiVuelosNoDisponible extends Error {
 export async function buscarVuelos(origen: string, destino: string): Promise<Vuelo[]> {
   const parametros = new URLSearchParams({ origen, destino })
   try {
-    const respuesta = await fetch(`${urlApiVuelos}/api/vuelos?${parametros}`)
+    const respuesta = await llamarApiVuelos('buscar_vuelos', `/api/vuelos?${parametros}`)
     if (!respuesta.ok) {
       throw new ApiVuelosNoDisponible()
     }
@@ -51,9 +100,9 @@ export interface VentaDeVuelos {
 export async function venderVuelos(idsVuelo: number[], pasajero: string): Promise<VentaDeVuelos> {
   let respuesta: Response
   try {
-    respuesta = await fetch(`${urlApiVuelos}/api/venta`, {
+    respuesta = await llamarApiVuelos('vender_vuelos', '/api/venta', 
+    {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids_vuelo: idsVuelo, pasajero }),
     })
   } catch {
