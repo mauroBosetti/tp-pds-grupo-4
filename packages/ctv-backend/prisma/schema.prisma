@@ -36,6 +36,8 @@ model Paquete {
   vueloVueltaId Int     @map("vuelo_vuelta_id")
   agenciaId     String  @map("agencia_id") @db.Uuid
   agencia       Agencia @relation(fields: [agenciaId], references: [id])
+  hotelId       String  @map("hotel_id") @db.Uuid
+  hotel         Hotel   @relation(fields: [hotelId], references: [id])
 
   compras   Compra[]
   opiniones Opinion[]
@@ -109,4 +111,16 @@ model Opinion {
 
   @@id([usuarioClienteId, paqueteId])
   @@map("opinion")
+}
+
+model Hotel {
+  id        String    @id @default(uuid()) @db.Uuid
+  nombre    String
+  direccion String
+  pais      String
+  ciudad    String
+  imagen    String
+  paquetes  Paquete[]
+
+  @@map("hotel")
 }
