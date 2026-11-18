@@ -110,6 +110,19 @@ describe('POST /api/hoteles', () => {
     expect(respuesta.body).toMatchObject(hotelCreado)
     expect(registrar).toHaveBeenCalledWith(datosHotel)
   })
+  it('crea el hotel con un token válido que no es de administrador', async () => {
+    const hotelCreado = { id: 'h-1', ...datosHotel }
+    registrar.mockResolvedValue(hotelCreado)
+
+    const respuesta = await request(crearApp())
+      .post('/api/hoteles')
+      .set('Authorization', `Bearer ${tokenAgencia}`)
+      .send(datosHotel)
+
+    expect(respuesta.status).toBe(401)
+    expect(respuesta.body).toMatchObject({ error: 'No autorizado' })
+    expect(registrar).not.toHaveBeenCalled()
+  })
 })
 
 describe('GET /api/hoteles/:id', () => {
