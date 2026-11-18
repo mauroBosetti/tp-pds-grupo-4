@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { crearHotel, SinAutorizacion } from './hoteles'
+import { crearHotel, listarHoteles, SinAutorizacion } from './hoteles'
 import { guardarTokenAdministrador } from '@/auth/tokenAdministrador'
+import { guardarTokenUsuario } from '@/auth/tokenUsuario'
 
 function responderCon(cuerpo: unknown, init: { status?: number } = {}) {
   const status = init.status ?? 201
@@ -48,5 +49,40 @@ describe('crearHotel', () => {
     vi.stubGlobal('fetch', responderCon(null, { status: 401 }))
 
     await expect(crearHotel(datosHotel)).rejects.toBeInstanceOf(SinAutorizacion)
+  })
+})
+
+describe('listarHoteles', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    localStorage.clear()
+  })
+
+  it('incluye el token de usuario en el encabezado Authorization', async () => {
+    guardarTokenUsuario('token-usr')
+    const fetchFalso = responderCon([hotelCreado])
+    vi.stubGlobal('fetch', fetchFalso)
+
+    const hoteles = await listarHoteles()
+
+    const [, opciones] = fetchFalso.mock.calls[0] as [string, RequestInit]
+    expect((opciones.headers as Record<string, string>)['Authorization']).toBe('Bearer token-usr')
+    expect(hoteles).toEqual([hotelCreado])
+  })
+
+  it('no manda Authorization cuando no hay token', async () => {
+    const fetchFalso = responderCon([hotelCreado])
+    vi.stubGlobal('fetch', fetchFalso)
+
+    await listarHoteles()
+
+    const [, opciones] = fetchFalso.mock.calls[0] as [string, RequestInit]
+    expect((opciones.headers as Record<string, string>)['Authorization']).toBeUndefined()
+  })
+
+  it('lanza SinAutorizacion ante un 401', async () => {
+    vi.stubGlobal('fetch', responderCon(null, { status: 401 }))
+
+    await expect(listarHoteles()).rejects.toBeInstanceOf(SinAutorizacion)
   })
 })

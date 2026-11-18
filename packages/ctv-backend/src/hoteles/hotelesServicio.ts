@@ -1,4 +1,4 @@
-import { crearHotel, buscarHotelPorId, DatosNuevoHotel } from './hotelesRepositorio.js'
+import { crearHotel, buscarHotelPorId, buscarTodosLosHoteles, DatosNuevoHotel } from './hotelesRepositorio.js'
 
 export class DatosDeHotelInvalidos extends Error {
   constructor() {
@@ -39,4 +39,8 @@ export function registrarHotel(datos: unknown) {
 
 export function obtenerHotel(id: string) {
   return buscarHotelPorId(id)
+}
+
+export function listarHoteles() {
+  return buscarTodosLosHoteles()
 }

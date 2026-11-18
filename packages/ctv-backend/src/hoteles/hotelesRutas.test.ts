@@ -2,16 +2,17 @@ import express from 'express'
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
-import { registrarHotel, obtenerHotel } from './hotelesServicio.js'
+import { registrarHotel, obtenerHotel, listarHoteles } from './hotelesServicio.js'
 import { hotelesRouter } from './hotelesRutas.js'
 
 vi.mock('./hotelesServicio.js', async (importarReal) => {
   const real = await importarReal<typeof import('./hotelesServicio.js')>()
-  return { ...real, registrarHotel: vi.fn(), obtenerHotel: vi.fn() }
+  return { ...real, registrarHotel: vi.fn(), obtenerHotel: vi.fn(), listarHoteles: vi.fn() }
 })
 
 const registrar = vi.mocked(registrarHotel)
 const obtener = vi.mocked(obtenerHotel)
+const listar = vi.mocked(listarHoteles)
 
 function crearApp() {
   const app = express()
@@ -21,6 +22,12 @@ function crearApp() {
 }
 
 const tokenAdmin = firmarToken({ sub: 'cuenta-1', rol: 'administrador', nombre: 'Ada' })
+const tokenAgencia = firmarToken({
+  sub: 'cuenta-2',
+  rol: 'agencia',
+  nombre: 'Bruno',
+  agenciaId: 'ag-1',
+})
 
 const datosHotel = {
   nombre: 'Hotel Central',
@@ -29,6 +36,32 @@ const datosHotel = {
   ciudad: 'Buenos Aires',
   imagen: 'https://example.com/hotel.jpg',
 }
+
+describe('GET /api/hoteles', () => {
+  beforeEach(() => {
+    listar.mockReset()
+  })
+
+  it('responde 401 si no hay token de usuario', async () => {
+    const respuesta = await request(crearApp()).get('/api/hoteles')
+
+    expect(respuesta.status).toBe(401)
+    expect(listar).not.toHaveBeenCalled()
+  })
+
+  it('responde 200 con la lista de hoteles para un usuario autenticado', async () => {
+    const hoteles = [{ id: 'h-1', ...datosHotel }]
+    listar.mockResolvedValue(hoteles)
+
+    const respuesta = await request(crearApp())
+      .get('/api/hoteles')
+      .set('Authorization', `Bearer ${tokenAgencia}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toEqual(hoteles)
+    expect(listar).toHaveBeenCalled()
+  })
+})
 
 describe('POST /api/hoteles', () => {
   beforeEach(() => {

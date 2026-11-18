@@ -15,3 +15,7 @@ export function crearHotel(datos: DatosNuevoHotel) {
 export function buscarHotelPorId(id: string) {
   return cliente.hotel.findUnique({ where: { id } })
 }
+
+export function buscarTodosLosHoteles() {
+  return cliente.hotel.findMany({ orderBy: { nombre: 'asc' } })
+}

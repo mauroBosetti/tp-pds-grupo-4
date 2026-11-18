@@ -1,8 +1,14 @@
 import { Router } from 'express'
-import { registrarHotel, obtenerHotel, DatosDeHotelInvalidos } from '../hoteles/hotelesServicio.js'
+import { registrarHotel, obtenerHotel, listarHoteles, DatosDeHotelInvalidos } from '../hoteles/hotelesServicio.js'
 import { requiereAdministrador } from '../auth/requiereAdministrador.js'
+import { requiereUsuario } from '../auth/requiereUsuario.js'
 
 const hotelesRouter: Router = Router()
+
+hotelesRouter.get('/', requiereUsuario, async (_req, res) => {
+  const hoteles = await listarHoteles()
+  res.json(hoteles)
+})
 
 hotelesRouter.post('/', requiereAdministrador, async (req, res) => {
   try {
