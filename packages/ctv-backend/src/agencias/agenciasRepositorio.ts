@@ -29,3 +29,9 @@ export function buscarAgenciaPorId(id: string) {
 export function buscarAgenciaPorCodigo(codigoDeGrupo: string) {
   return cliente.agencia.findUnique({ where: { codigoDeGrupo } })
 }
+
+export function buscarTodasLasAgencias() {
+  return cliente.agencia.findMany({
+    orderBy: { nombre: 'asc' },
+  })
+}

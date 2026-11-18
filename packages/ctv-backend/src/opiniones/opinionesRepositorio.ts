@@ -32,3 +32,33 @@ export function buscarOpinionesDePaquete(paqueteId: string) {
     include: { usuarioCliente: { select: { nombre: true } } },
   })
 }
+
+export function buscarPaquetesDeInteres() {
+  return cliente.opinion.findMany({
+    where: { favorito: true },
+    include: {
+      usuarioCliente: {
+        include: { cuenta: { select: { email: true } } },
+      },
+      paquete: {
+        include: { agencia: { select: { id: true, nombre: true } } },
+      },
+    },
+  })
+}
+
+export function buscarTodasLasOpiniones() {
+  return cliente.opinion.findMany({
+    where: {
+      OR: [{ puntaje: { not: null } }, { comentario: { not: null } }],
+    },
+    include: {
+      usuarioCliente: {
+        include: { cuenta: { select: { email: true } } },
+      },
+      paquete: {
+        include: { agencia: { select: { id: true, nombre: true } } },
+      },
+    },
+  })
+}

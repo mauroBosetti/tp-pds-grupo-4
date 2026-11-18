@@ -1,7 +1,11 @@
 import { clienteComproPaquete } from '../compras/comprasRepositorio.js'
 import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
-import { guardarOpinion } from './opinionesRepositorio.js'
+import {
+  guardarOpinion,
+  buscarPaquetesDeInteres,
+  buscarTodasLasOpiniones,
+} from './opinionesRepositorio.js'
 
 export const PUNTAJE_MINIMO = 1
 export const PUNTAJE_MAXIMO = 5
@@ -64,4 +68,12 @@ export async function opinarSobrePaquete(
     throw new PaqueteNoComprado()
   }
   return guardarOpinion({ usuarioClienteId: usuarioCliente.id, paqueteId, ...opinion })
+}
+
+export function obtenerPaquetesDeInteres() {
+  return buscarPaquetesDeInteres()
+}
+
+export function obtenerTodasLasOpiniones() {
+  return buscarTodasLasOpiniones()
 }
