@@ -12,6 +12,7 @@ agencyRouter.post('/', requiereAdministrador, async (req, res) => {
     res.status(201).json(agencia)
   } catch (error) {
     if (error instanceof NombreDeAgenciaInvalido) {
+      logger.warn({ motivo: error.constructor.name }, 'agencia_rechazada')
       res.status(400).json({ error: error.message })
       return
     }

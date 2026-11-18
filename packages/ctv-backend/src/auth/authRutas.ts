@@ -32,6 +32,7 @@ authRouter.post('/administrador/login', async (req, res) => {
     res.json(resultado)
   } catch (error) {
     if (error instanceof CredencialesInvalidas || error instanceof NoEsAdministrador) {
+      logger.warn({ rol: 'administrador', motivo: error.constructor.name }, 'login_fallido')
       res.status(401).json({ error: 'Email o contraseña incorrectos' })
       return
     }
@@ -46,6 +47,7 @@ authRouter.post('/agencia/login', async (req, res) => {
     res.json(resultado)
   } catch (error) {
     if (error instanceof CredencialesInvalidas || error instanceof NoEsUsuarioAgencia) {
+      logger.warn({ rol: 'agencia', motivo: error.constructor.name }, 'login_fallido')
       res.status(401).json({ error: 'Email o contraseña incorrectos' })
       return
     }
@@ -85,6 +87,7 @@ authRouter.post('/cliente/login', async (req, res) => {
     res.json(resultado)
   } catch (error) {
     if (error instanceof CredencialesInvalidas || error instanceof NoEsUsuarioCliente) {
+      logger.warn({ rol: 'cliente', motivo: error.constructor.name }, 'login_fallido')
       res.status(401).json({ error: 'Email o contraseña incorrectos' })
       return
     }
@@ -99,7 +102,7 @@ authRouter.post('/cliente/registro', async (req, res) => {
       email: req.body?.email,
       clave: req.body?.clave,
     })
-    logger.info({ rol: 'cliente', usuarioId: usuario.id, agenciaId: usuario.agenciaId }, 'usuario_registrado')
+    logger.info({ rol: 'cliente', usuarioId: usuario.id }, 'usuario_registrado')
     res.status(201).json({ id: usuario.id, nombre: usuario.nombre })
   } catch (error) {
     if (error instanceof DatosRegistroClienteInvalidos) {

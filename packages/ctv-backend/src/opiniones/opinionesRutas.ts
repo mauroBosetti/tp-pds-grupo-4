@@ -18,7 +18,7 @@ opinionesRouter.put('/:paqueteId', requiereCliente, async (req, res) => {
   }
   const paqueteId = String(req.params.paqueteId)
   try {
-    const opinion = await opinarSobrePaquete(cuentaId, String(req.params.paqueteId), req.body ?? {})
+    const opinion = await opinarSobrePaquete(cuentaId, paqueteId, req.body ?? {})
     logger.info({ paqueteId: opinion.paqueteId, puntaje: opinion.puntaje }, 'opinion_guardada')
     res.json({
       paqueteId: opinion.paqueteId,

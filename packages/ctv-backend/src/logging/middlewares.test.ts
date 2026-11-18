@@ -1,8 +1,8 @@
 import express from 'express'
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
-import { obtenerRequestId } from './contexto.ts'
-import { contextoDePeticion, manejarErrores } from './middleware.ts'
+import { obtenerRequestId } from './contexto.js'
+import { contextoDePeticion, manejarErrores } from './middleware.js'
 
 function crearApp() {
   const app = express()

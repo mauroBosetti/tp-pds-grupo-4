@@ -5,6 +5,12 @@ import {registrarVenta, VentaError} from "./ventas.js";
 import {logger} from './logging/logger.js'
 import {contextoDePeticion, registrarPeticiones, manejarErrores} from './logging/middlewares.js'
 
+const MOTIVOS_DE_RECHAZO = {
+    400: "PedidoInvalido",
+    404: "VueloInexistente",
+    409: "VueloSinDisponibilidad",
+};
+
 /**
  * Crea la app de Express recibiendo el pool por parámetro (inyección de dependencia).
  * Esto permite testear la app con un pool apuntando a una DB de test,
@@ -61,7 +67,14 @@ export function createApp(pool) {
             res.json(venta);
         } catch (err) {
             if (err instanceof VentaError) {
-                logger.warn({status: err.status, motivo: err.message}, "venta_rechazada");
+                logger.warn(
+                    {
+                        status: err.status,
+                        motivo: MOTIVOS_DE_RECHAZO[err.status] ?? "Desconocido",
+                        detalle: err.message,
+                    }, 
+                    "venta_rechazada"
+                );
                 return res.status(err.status).json({error: err.message});
             }
             logger.error({err}, "error_registrando_venta");
