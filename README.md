@@ -25,6 +25,10 @@
 * **error** : Fallas del sistema: errores 5xx, api-vuelos inaccesible, compra inconsistente
 * **fatal** : El proceso no puede seguir y se cierra
 * **silence** : No escribe nada
+### Loki + Grafana
+* http://localhost:3001  admin:admin > skip
+* Data sources > Loki > explore > label filter > app > ctv-backend | api-vuelos > Run query
+* loki-dashboard.json con paneles de "Errores y advertencias" y Trazabilidad: todos los logs (filtrar con la variable requestId) entre otros.
 
 ## K6
    * npm run dev
