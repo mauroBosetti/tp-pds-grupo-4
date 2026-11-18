@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tp-pds
+description: Despliegue del TP PDS (ctv-frontend, ctv-backend, api-vuelos y sus bases Postgres)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

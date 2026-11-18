@@ -7,6 +7,22 @@
    * http://localhost:8080/admin
    * http://localhost:8080/login
 
+### W/ Kubernetes (kind + Helm)
+   * requisitos: docker, kubectl, kind y helm (`brew install kind helm`)
+   * docker build -t ctv-backend:dev packages/ctv-backend
+   * docker build -t api-vuelos:dev packages/api-vuelos
+   * docker build -t ctv-frontend:dev packages/ctv-frontend
+   * kind create cluster --name tp-pds --config k8s/kind-config.yaml
+   * kind load docker-image ctv-backend:dev api-vuelos:dev ctv-frontend:dev --name tp-pds
+   * kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+   * kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=240s
+   * cp k8s/valores-locales.example.yaml k8s/valores-locales.yaml (completar las contraseñas; el archivo no se versiona)
+   * helm install tp-pds k8s/tp-pds -n tp-pds --create-namespace -f k8s/valores-locales.yaml --wait
+   * http://localhost:8081/login
+
+   Para aplicar cambios: `helm upgrade tp-pds k8s/tp-pds -n tp-pds -f k8s/valores-locales.yaml`.
+   Para borrar el cluster: `kind delete cluster --name tp-pds`.
+
 ### imagenes docker
    * grafana
    * influxdb

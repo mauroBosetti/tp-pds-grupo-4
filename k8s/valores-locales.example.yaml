@@ -1,0 +1,17 @@
+# Copiar a k8s/valores-locales.yaml y poner contraseñas reales.
+# k8s/valores-locales.yaml está en .gitignore: no se versiona.
+secretos:
+  claveJwt: "un-secreto-largo"
+  passwordPostgresCtv: "ctv-password"
+  passwordPostgresVuelos: "vuelos-password"
+
+administradores:
+  - nombre: "Admin Uno"
+    email: "admin1@ctv.com"
+    password: "admin1234"
+  - nombre: "Admin Dos"
+    email: "admin2@ctv.com"
+    password: "admin1234"
+  - nombre: "Admin Tres"
+    email: "admin3@ctv.com"
+    password: "admin1234"
