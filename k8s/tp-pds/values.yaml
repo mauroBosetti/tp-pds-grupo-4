@@ -1,0 +1,48 @@
+# Valores por defecto. Las contraseñas reales NO van acá: se pasan con un archivo
+# propio (ver k8s/valores-locales.example.yaml) o con --set.
+
+ctvBackend:
+  imagen:
+    repositorio: ctv-backend
+    tag: dev
+  puerto: 3000
+
+ctvFrontend:
+  imagen:
+    repositorio: ctv-frontend
+    tag: dev
+  puerto: 80
+
+apiVuelos:
+  imagen:
+    repositorio: api-vuelos
+    tag: dev
+  puerto: 4000
+
+postgres:
+  imagen: postgres:16-alpine
+  almacenamiento: 1Gi
+  bases:
+    ctv:
+      usuario: ctv
+    vuelos:
+      usuario: vuelos
+
+ingress:
+  claseIngress: nginx
+
+secretos:
+  claveJwt: cambiar-en-produccion
+  passwordPostgresCtv: cambiar-en-produccion
+  passwordPostgresVuelos: cambiar-en-produccion
+
+administradores:
+  - nombre: "Admin Uno"
+    email: "admin1@ctv.com"
+    password: "cambiar-en-produccion"
+  - nombre: "Admin Dos"
+    email: "admin2@ctv.com"
+    password: "cambiar-en-produccion"
+  - nombre: "Admin Tres"
+    email: "admin3@ctv.com"
+    password: "cambiar-en-produccion"

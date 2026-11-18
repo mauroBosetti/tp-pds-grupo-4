@@ -6,8 +6,6 @@ COPY package.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm install
 
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
 # RUN apk add --no-cache chromium
 # ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 ENV DISABLE_ERD=true

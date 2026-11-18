@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-inicializar-vuelos
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: inicializar-vuelos
+          image: "{{ .Values.apiVuelos.imagen.repositorio }}:{{ .Values.apiVuelos.imagen.tag }}"
+          imagePullPolicy: IfNotPresent
+          command:
+            - node
+            - --input-type=module
+            - -e
+            - |
+              import pg from "pg";
+              import { readFileSync } from "node:fs";
+
+              const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+              try {
+                const { rows } = await pool.query("SELECT to_regclass('vuelos') IS NOT NULL AS existe");
+                if (rows[0].existe) {
+                  console.log("La base de vuelos ya tiene datos, no se vuelve a inicializar");
+                } else {
+                  await pool.query(readFileSync("/app/src/db/script.sql", "utf-8"));
+                  console.log("Base de vuelos inicializada");
+                }
+              } finally {
+                await pool.end();
+              }
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secretos
+                  key: DATABASE_URL_VUELOS

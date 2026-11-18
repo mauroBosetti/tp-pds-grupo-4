@@ -24,6 +24,10 @@ export function createApp(pool) {
     app.use(cors());
     app.use(json());
 
+    app.get("/health", (_req, res) => {
+        res.json({estado: "ok"});
+    });
+
     app.get("/api/vuelos", async (req, res) => {
         try {
             const {fecha, destino, origen} = req.query;
