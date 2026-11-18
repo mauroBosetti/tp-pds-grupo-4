@@ -23,6 +23,9 @@ jobs:
           - imagen: ctv-frontend
             contexto: packages/ctv-frontend
             argumentos: ""
+          - imagen: api-vuelos
+            contexto: packages/api-vuelos
+            argumentos: ""
 
     steps:
       - name: Checkout
