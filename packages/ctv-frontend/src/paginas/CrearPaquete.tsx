@@ -52,6 +52,7 @@ export default function CrearPaquete() {
   const [precio, setPrecio] = useState('')
   const [origen, setOrigen] = useState('')
   const [destino, setDestino] = useState('')
+  const [hotelId, setHotelId] = useState('')
   const [vuelosIda, setVuelosIda] = useState<Vuelo[] | null>(null)
   const [vuelosVuelta, setVuelosVuelta] = useState<Vuelo[] | null>(null)
   const [vueloIdaId, setVueloIdaId] = useState<number | null>(null)
@@ -66,7 +67,7 @@ export default function CrearPaquete() {
   const precioValido = Number.isInteger(precioNumerico) && precioNumerico > 0
   const noSePuedeBuscar = origen.trim() === '' || destino.trim() === ''
   const noSePuedeCrear =
-    nombre.trim() === '' || !precioValido || vueloIdaId === null || vueloVueltaId === null
+    nombre.trim() === '' || !precioValido || vueloIdaId === null || vueloVueltaId === null || hotelId.trim() === ''
 
   function volverAlLogin() {
     cerrarSesion()
@@ -111,6 +112,7 @@ export default function CrearPaquete() {
         destino,
         vueloIdaId,
         vueloVueltaId,
+        hotelId,
       })
       navegar('/agencia')
     } catch (fallo) {
@@ -171,6 +173,16 @@ export default function CrearPaquete() {
                 value={destino}
                 onChange={(evento) => setDestino(evento.target.value)}
                 placeholder="Madrid"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="hotelId">ID del Hotel</Label>
+              <Input
+                id="hotelId"
+                value={hotelId}
+                onChange={(evento) => setHotelId(evento.target.value)}
+                placeholder="ID del hotel"
               />
             </div>
 

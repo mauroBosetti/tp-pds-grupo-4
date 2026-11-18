@@ -13,6 +13,15 @@ export interface Vuelo {
   disponibilidad: number
 }
 
+export interface Hotel {
+  id: string
+  nombre: string
+  direccion: string
+  pais: string
+  ciudad: string
+  imagen: string
+}
+
 export interface DatosNuevoPaquete {
   nombre: string
   precio: number
@@ -20,6 +29,7 @@ export interface DatosNuevoPaquete {
   destino: string
   vueloIdaId: number
   vueloVueltaId: number
+  hotelId: string
 }
 
 export interface Paquete extends DatosNuevoPaquete {
@@ -29,6 +39,7 @@ export interface Paquete extends DatosNuevoPaquete {
 
 export interface PaqueteConAgencia extends Paquete {
   agencia: { id: string; nombre: string }
+  hotel: Hotel
 }
 
 export interface ResumenDePuntajes {

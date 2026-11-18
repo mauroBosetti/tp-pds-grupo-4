@@ -8,12 +8,17 @@ export interface DatosNuevoPaquete {
   vueloIdaId: number
   vueloVueltaId: number
   agenciaId: string
+  hotelId: string
 }
 
 export function crearPaquete(datos: DatosNuevoPaquete) {
-  const { agenciaId, ...paquete } = datos
+  const { agenciaId, hotelId, ...paquete } = datos
   return cliente.paquete.create({
-    data: { ...paquete, agencia: { connect: { id: agenciaId } } },
+    data: {
+      ...paquete,
+      agencia: { connect: { id: agenciaId } },
+      hotel: { connect: { id: hotelId } },
+    },
   })
 }
 
@@ -23,7 +28,10 @@ export function buscarPaquetesDeAgencia(agenciaId: string) {
 
 export function buscarTodosLosPaquetes() {
   return cliente.paquete.findMany({
-    include: { agencia: { select: { id: true, nombre: true } } },
+    include: {
+      agencia: { select: { id: true, nombre: true } },
+      hotel: { select: { id: true, nombre: true, direccion: true, pais: true, ciudad: true, imagen: true } },
+    },
   })
 }
 
@@ -34,6 +42,9 @@ export function buscarPaquetePorId(id: string) {
 export function buscarPaqueteConAgencia(id: string) {
   return cliente.paquete.findUnique({
     where: { id },
-    include: { agencia: { select: { id: true, nombre: true } } },
+    include: {
+      agencia: { select: { id: true, nombre: true } },
+      hotel: { select: { id: true, nombre: true, direccion: true, pais: true, ciudad: true, imagen: true } },
+    },
   })
 }
