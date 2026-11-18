@@ -12,6 +12,7 @@ import MisCompras from './paginas/MisCompras'
 import AgenciaHome from './paginas/AgenciaHome'
 import CrearPaquete from './paginas/CrearPaquete'
 import CrearAgencia from './paginas/CrearAgencia'
+import CrearHotel from './paginas/CrearHotel'
 import DetalleAgencia from './paginas/DetalleAgencia'
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/admin/login" element={<LoginAdministrador />} />
             <Route element={<RutaAdministrador />}>
               <Route path="/admin" element={<CrearAgencia />} />
+              <Route path="/admin/hoteles/nuevo" element={<CrearHotel />} />
             </Route>
             <Route path="/login" element={<LoginUsuario />} />
             <Route path="/registro" element={<Navigate to="/login?modo=registro" replace />} />
