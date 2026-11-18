@@ -3,10 +3,11 @@
 ## run full project
 
 ### W/ Docker Compose
+```
    * docker compose up
    * http://localhost:8080/admin
    * http://localhost:8080/login
-
+```
 ### imagenes docker
    * grafana
    * influxdb
@@ -14,6 +15,16 @@
    * api-vuelos
    * ctv-backend
    * ctv-frontend
+   * k6
+
+## Logs
+```docker compose logs -f --no-log-prefix ctv-backend api-vuelos | npx pino-pretty```
+### LOG_LEVEL
+* **info** : Eventos normales: compra registrada, login exitoso, petición terminada con 2xx
+* **warn** : Algo rechazado o inesperado, pero el sistema funciona: venta rechazada por falta de  cupo, login fallido, respuestas 4xx
+* **error** : Fallas del sistema: errores 5xx, api-vuelos inaccesible, compra inconsistente
+* **fatal** : El proceso no puede seguir y se cierra
+* **silence** : No escribe nada
 
 ## K6
    * npm run dev
@@ -28,6 +39,7 @@
    * npm run seed:k6:clean
 
    > se recomienda:
+   > * LOG_LEVEL=error docker compose up -d
    > * docker compose down sonarqube
    ### influx + graphana
 
