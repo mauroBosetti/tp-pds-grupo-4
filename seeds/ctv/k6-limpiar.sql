@@ -6,6 +6,7 @@ DELETE FROM compra WHERE paquete_id IN (SELECT id FROM paquete WHERE agencia_id 
 DELETE FROM opinion WHERE paquete_id IN (SELECT id FROM paquete WHERE agencia_id = '00000000-0000-4000-8000-0000000000a1')
    OR usuario_cliente_id IN (SELECT id FROM usuario_cliente WHERE nombre LIKE 'K6 %');
 DELETE FROM paquete WHERE agencia_id = '00000000-0000-4000-8000-0000000000a1';
+DELETE FROM hotel WHERE id = '00000000-0000-4000-8000-0000000000b1';
 DELETE FROM usuario_cliente WHERE nombre LIKE 'K6 %';
 DELETE FROM usuario_agencia WHERE agencia_id = '00000000-0000-4000-8000-0000000000a1';
 DELETE FROM cuenta WHERE email LIKE '%@k6.test';

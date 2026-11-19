@@ -12,7 +12,7 @@ export function requiereAdministrador(req: Request, res: Response, next: NextFun
   try {
     const datos = verificarToken(encabezado.slice(prefijoBearer.length))
     if (datos.rol !== 'administrador') {
-      res.status(401).json({ error: 'No autenticado' })
+      res.status(401).json({ error: 'No autorizado' })
       return
     }
     next()

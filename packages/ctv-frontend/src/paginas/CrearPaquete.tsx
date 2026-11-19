@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buscarVuelos, crearPaquete, SinAutorizacion, type Vuelo } from '@/api/paquetes'
+import { listarHoteles, type Hotel } from '@/api/hoteles'
 import { useAuthUsuario } from '@/auth/AuthUsuarioContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,6 +53,8 @@ export default function CrearPaquete() {
   const [precio, setPrecio] = useState('')
   const [origen, setOrigen] = useState('')
   const [destino, setDestino] = useState('')
+  const [hotelId, setHotelId] = useState<string | null>(null)
+  const [hoteles, setHoteles] = useState<Hotel[]>([])
   const [vuelosIda, setVuelosIda] = useState<Vuelo[] | null>(null)
   const [vuelosVuelta, setVuelosVuelta] = useState<Vuelo[] | null>(null)
   const [vueloIdaId, setVueloIdaId] = useState<number | null>(null)
@@ -62,11 +65,21 @@ export default function CrearPaquete() {
   const { cerrarSesion } = useAuthUsuario()
   const navegar = useNavigate()
 
+  useEffect(() => {
+    listarHoteles()
+      .then(setHoteles)
+      .catch((fallo) => {
+        if (fallo instanceof SinAutorizacion) {
+          volverAlLogin()
+        }
+      })
+  }, [])
+
   const precioNumerico = Number(precio)
   const precioValido = Number.isInteger(precioNumerico) && precioNumerico > 0
   const noSePuedeBuscar = origen.trim() === '' || destino.trim() === ''
   const noSePuedeCrear =
-    nombre.trim() === '' || !precioValido || vueloIdaId === null || vueloVueltaId === null
+    nombre.trim() === '' || !precioValido || vueloIdaId === null || vueloVueltaId === null || hotelId === null
 
   function volverAlLogin() {
     cerrarSesion()
@@ -98,7 +111,7 @@ export default function CrearPaquete() {
 
   async function manejarEnvio(evento: React.FormEvent) {
     evento.preventDefault()
-    if (vueloIdaId === null || vueloVueltaId === null) {
+    if (vueloIdaId === null || vueloVueltaId === null || hotelId === null) {
       return
     }
     setError('')
@@ -111,6 +124,7 @@ export default function CrearPaquete() {
         destino,
         vueloIdaId,
         vueloVueltaId,
+        hotelId,
       })
       navegar('/agencia')
     } catch (fallo) {
@@ -172,6 +186,25 @@ export default function CrearPaquete() {
                 onChange={(evento) => setDestino(evento.target.value)}
                 placeholder="Madrid"
               />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="hotel">Hotel</Label>
+              <select
+                id="hotel"
+                value={hotelId ?? ''}
+                onChange={(evento) => setHotelId(evento.target.value || null)}
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  {hoteles.length === 0 ? 'No hay hoteles disponibles' : 'Seleccioná un hotel'}
+                </option>
+                {hoteles.map((hotel) => (
+                  <option key={hotel.id} value={hotel.id}>
+                    {hotel.nombre} — {hotel.ciudad}, {hotel.pais} ({hotel.direccion})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <Button type="button" variant="secondary" onClick={buscar} disabled={buscando || noSePuedeBuscar}>

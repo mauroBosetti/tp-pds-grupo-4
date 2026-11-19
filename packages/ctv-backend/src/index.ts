@@ -4,6 +4,7 @@ import cors from 'cors'
 import YAML from 'yamljs'
 import swaggerUi from 'swagger-ui-express'
 import {agencyRouter} from "./agencias/agenciasRutas.js";
+import {hotelesRouter} from "./hoteles/hotelesRutas.js";
 import {authRouter} from "./auth/authRutas.js";
 import {comprasRouter} from "./compras/comprasRutas.js";
 import {packageRouter} from "./paquetes/paquetesRutas.js";
@@ -21,6 +22,7 @@ const swaggerDocument = YAML.load('./resources/swagger.yaml')
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use('/api/agencias', agencyRouter)
+app.use('/api/hoteles', hotelesRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/compras', comprasRouter)
 app.use('/api/package', packageRouter)
