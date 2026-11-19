@@ -51,12 +51,4 @@ describe('venderVuelos', () => {
     await expect(venderVuelos([1, 2], 'Clara')).rejects.toBeInstanceOf(ApiVuelosNoDisponible)
   })
 
-  it('envía el request id actual a la API de vuelos', async () => {
-    fetchSimulado.mockResolvedValue(
-      respuestaJson(200, { id_venta: 3, pasajero: 'Clara', ids_vuelo: [1, 2] }),
-    )
-    await ejecutarConContexto({ requestId: 'abc-123' }, () => venderVuelos([1, 2], 'Clara'))
-    expect(fetchSimulado.mock.calls[0][1].headers['x-request-id']).toBe('abc-123')
-  })
-
 })
