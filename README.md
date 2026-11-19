@@ -27,6 +27,7 @@
 * **silence** : No escribe nada
 ### Loki + Grafana
 * http://localhost:3001  admin:admin > skip
+> configuracion db y dashboard en compose.
 * Data sources > Loki > explore > label filter > app > ctv-backend | api-vuelos > Run query
 * loki-dashboard.json con paneles de "Errores y advertencias" y Trazabilidad: todos los logs (filtrar con la variable requestId) entre otros.
 
@@ -48,7 +49,8 @@
    ### influx + graphana
 
    * http://localhost:3001
-   * admin | admin
+   * admin | admin > skip
+   > configuracion db y dashboard en compose.
    * Connections > Add new > (search) InfluxDB (Data Sources) > Add new data source
    
    #### configuracion de plugin
@@ -59,7 +61,7 @@
    * Dashboards > View as list 
    * Dashboards > New > Import
    * Upload dashboard JSON file | Import via dashboard JSON model 
-      * .\k6\dashboard-influx.json > Load
+      * .\dashboards\dashboard-influx.json > Load
       * DS_INFLUXDB (seleccionar) > Import
 
    ### parametros bash
