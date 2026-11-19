@@ -468,7 +468,7 @@
             "type": "loki",
             "uid": "${ds}"
           },
-          "expr": "sum by (level) (count_over_time({$selector} | json | servicio=~\"$servicio\" [$__auto]))",
+          "expr": "sum by (level) (count_over_time({$selector} | json | __error__=\"\" | servicio=~\"$servicio\" [$__auto]))",
           "legendFormat": "{{level}}",
           "refId": "A",
           "queryType": "range"
@@ -859,6 +859,56 @@
         "enableLogDetails": true,
         "sortOrder": "Descending",
         "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "api-vuelos (tercero): latencia p95 por operación",
+      "description": "Tiempo de las llamadas salientes del backend a api-vuelos (msg llamada_api_vuelos)",
+      "datasource": { "type": "loki", "uid": "${ds}" },
+      "gridPos": { "x": 0, "y": 50, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${ds}" },
+          "expr": "quantile_over_time(0.95, {$selector} | json | servicio=~\"$servicio\" | msg=\"llamada_api_vuelos\" | unwrap duracionMs | __error__=\"\" [$__auto]) by (operacion)",
+          "legendFormat": "{{operacion}}",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 1, "fillOpacity": 10 } },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "api-vuelos (tercero): llamadas por operación y estado",
+      "description": "Cada estado HTTP devuelto por api-vuelos; llamada_api_vuelos_fallida = no hubo respuesta",
+      "datasource": { "type": "loki", "uid": "${ds}" },
+      "gridPos": { "x": 12, "y": 50, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${ds}" },
+          "expr": "sum by (operacion, estado) (count_over_time({$selector} | json | servicio=~\"$servicio\" | msg=~\"llamada_api_vuelos.*\" [$__auto]))",
+          "legendFormat": "{{operacion}} {{estado}}",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 1, "fillOpacity": 25, "stacking": { "mode": "normal" } } },
+        "overrides": []
       }
     }
   ],
