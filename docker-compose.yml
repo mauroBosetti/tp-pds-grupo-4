@@ -1,5 +1,39 @@
 services:
   
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    container_name: cadvisor
+    privileged: true
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=5s
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - cadvisor
+    restart: unless-stopped
+
   influxdb:
     image: influxdb:1.8
     container_name: influxdb
@@ -67,7 +101,7 @@ services:
   sonarqube: 
     image: sonarqube:community 
     ports: 
-      - "9000:9000" 
+      - "9001:9000" 
     environment: 
       - SONAR-ES-BOOTSTRAP-CHECKS-DISABLE=true 
     volumes: 
@@ -172,3 +206,4 @@ volumes:
   alloy-data:
   loki-data:
   influxdb-data:
+  prometheus-data:

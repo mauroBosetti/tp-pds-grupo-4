@@ -16,6 +16,10 @@
    * ctv-backend
    * ctv-frontend
    * k6
+   * loki
+   * prometheus
+   * cAdvisor
+   * alloy
 
 ## Logs
 ```docker compose logs -f --no-log-prefix ctv-backend api-vuelos | npx pino-pretty```
@@ -30,6 +34,11 @@
 > configuracion db y dashboard en compose.
 * Data sources > Loki > explore > label filter > app > ctv-backend | api-vuelos > Run query
 * loki-dashboard.json con paneles de "Errores y advertencias" y Trazabilidad: todos los logs (filtrar con la variable requestId) entre otros.
+
+## Prometheus + cAdvisor
+* prometheus http://localhost:9090
+* http://localhost:3001  admin:admin > skip
+> configuracion db y dashboard en compose.
 
 ## K6
    * npm run dev
@@ -76,7 +85,7 @@
 ```
 docker compose up sonarqube
 ```
-* http://localhost:9000/
+* http://localhost:9001/
 * usr and pass: admin admin
 * projects -> create local project
 * project display name: tp-pds-grupo-4
