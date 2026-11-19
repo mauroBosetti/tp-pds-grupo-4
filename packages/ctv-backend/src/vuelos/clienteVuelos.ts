@@ -39,23 +39,21 @@ function nivelSegunEstado(estado: number) {
 
 async function llamarApiVuelos(
   operacion: string,
-  ruta: string,
-  opciones: OpcionesDeLlamada = {},
-): Promise<Response> {
+  detalle: Record<string, unknown>,
+  pedido: () => Promise<Response>,
+) {
   const inicio = performance.now()
   const duracionMs = () => Math.round((performance.now() - inicio) * 10) / 10
   try {
-    const respuesta = await fetch(`${urlApiVuelos}${ruta}`, {
-      ...opciones,
-      headers: encabezadosDeSalida(opciones),
-    })
-    logger[nivelSegunEstado(respuesta.status)](
-      { operacion, status: respuesta.status, duracionMs: duracionMs() },
-      'api_vuelos_respuesta',
+    const respuesta = await pedido()
+    const nivel = respuesta.status >= 500 ? 'error' : respuesta.status >= 400 ? 'warn' : 'info'
+    logger[nivel](
+      { operacion, estado: respuesta.status, duracionMs: duracionMs(), ...detalle },
+      'llamada_api_vuelos',
     )
     return respuesta
   } catch (error) {
-    logger.error({ err: error, operacion, duracionMs: duracionMs() }, 'api_vuelos_inaccesible')
+    logger.error({ err: error, operacion, duracionMs: duracionMs(), ...detalle }, 'llamada_api_vuelos_fallida')
     throw error
   }
 }
@@ -69,7 +67,9 @@ export class ApiVuelosNoDisponible extends Error {
 export async function buscarVuelos(origen: string, destino: string): Promise<Vuelo[]> {
   const parametros = new URLSearchParams({ origen, destino })
   try {
-    const respuesta = await llamarApiVuelos('buscar_vuelos', `/api/vuelos?${parametros}`)
+    const respuesta = await llamarApiVuelos('buscar_vuelos', { origen, destino }, 
+      () => fetch(`${urlApiVuelos}/api/vuelos?${parametros}`)
+    )
     if (!respuesta.ok) {
       throw new ApiVuelosNoDisponible()
     }
@@ -100,11 +100,13 @@ export interface VentaDeVuelos {
 export async function venderVuelos(idsVuelo: number[], pasajero: string): Promise<VentaDeVuelos> {
   let respuesta: Response
   try {
-    respuesta = await llamarApiVuelos('vender_vuelos', '/api/venta', 
-    {
-      method: 'POST',
-      body: JSON.stringify({ ids_vuelo: idsVuelo, pasajero }),
-    })
+    respuesta = await llamarApiVuelos('vender_vuelos', { idsVuelo }, 
+      () => fetch(`${urlApiVuelos}/api/venta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids_vuelo: idsVuelo, pasajero }),
+      }),
+    )
   } catch {
     throw new ApiVuelosNoDisponible()
   }
