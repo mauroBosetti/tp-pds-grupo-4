@@ -5,8 +5,8 @@ import {logger} from "./logging/logger.js"
 const port = Number(process.env.PORT) || 4001;
 const connectionString = process.env.DATABASE_URL || "postgresql://postgres:root@localhost:5432/db_vuelos"; // TODO sacar a un .env.dev
 
-process.env.PORT || logger.warn("Puerto no especificado");
-process.env.DATABASE_URL || logger.warn("DATABASE_URL no especificada");
+process.env.PORT || logger.warn("port_no_especificado");
+process.env.DATABASE_URL || logger.warn("database_url_no_especificada");
 
 process.on("unhandledRejection", (razon) => {
     logger.fatal({err: razon}, "promesa_rechazada_sin_manejar");
