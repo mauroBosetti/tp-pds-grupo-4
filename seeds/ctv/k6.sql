@@ -6,15 +6,18 @@ BEGIN;
 INSERT INTO agencia (id, nombre, codigo_de_grupo)
 VALUES ('00000000-0000-4000-8000-0000000000a1', 'K6 Agencia', '90000001');
 
+-- 1. Hotel fijo para las pruebas de k6 
+INSERT INTO hotel (id, nombre, direccion, pais, ciudad, imagen) VALUES ( '00000000-0000-4000-8000-0000000000b1', 'K6 Hotel Test', 'Av. K6 123', 'Argentina', 'Buenos Aires', 'https://example.com/hotel.jpg' );
+
 -- Paquetes fijos usados por los escenarios (vuelos 9001..9004 de seeds/vuelos/k6.sql)
-INSERT INTO paquete (id, nombre, precio, origen, destino, vuelo_ida_id, vuelo_vuelta_id, agencia_id) VALUES
-  ('00000000-0000-4000-8000-000000009001', 'K6 Paquete Carga',     1000, 'K6 Carga Origen',     'K6 Carga Destino',     9001, 9002, '00000000-0000-4000-8000-0000000000a1'),
-  ('00000000-0000-4000-8000-000000009002', 'K6 Paquete Sobreventa', 1000, 'K6 Sobreventa Origen', 'K6 Sobreventa Destino', 9003, 9004, '00000000-0000-4000-8000-0000000000a1');
+INSERT INTO paquete (id, nombre, precio, origen, destino, vuelo_ida_id, vuelo_vuelta_id, agencia_id, hotel_id) VALUES
+  ('00000000-0000-4000-8000-000000009001', 'K6 Paquete Carga',     1000, 'K6 Carga Origen',     'K6 Carga Destino',     9001, 9002, '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1'),
+  ('00000000-0000-4000-8000-000000009002', 'K6 Paquete Sobreventa', 1000, 'K6 Sobreventa Origen', 'K6 Sobreventa Destino', 9003, 9004, '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1');
 
 -- 500 paquetes extra para que el catálogo tenga volumen
-INSERT INTO paquete (id, nombre, precio, origen, destino, vuelo_ida_id, vuelo_vuelta_id, agencia_id)
+INSERT INTO paquete (id, nombre, precio, origen, destino, vuelo_ida_id, vuelo_vuelta_id, agencia_id, hotel_id)
 SELECT gen_random_uuid(), 'K6 Catalogo ' || n, 500 + n, 'K6 Carga Origen', 'K6 Carga Destino', 9001, 9002,
-       '00000000-0000-4000-8000-0000000000a1'
+       '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000b1'
 FROM generate_series(1, 500) AS n;
 
 -- 100 usuarios que opinan (no inician sesión) y ~10.000 opiniones

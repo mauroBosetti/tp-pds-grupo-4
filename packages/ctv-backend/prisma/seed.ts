@@ -54,6 +54,7 @@ async function main() {
   await prisma.usuarioAgencia.deleteMany();
   await prisma.usuarioCliente.deleteMany();
   await prisma.paquete.deleteMany();
+  await prisma.hotel.deleteMany();
   await prisma.agencia.deleteMany();
   await prisma.cuenta.deleteMany();
 
