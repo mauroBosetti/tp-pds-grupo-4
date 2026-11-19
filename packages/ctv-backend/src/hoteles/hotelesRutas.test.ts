@@ -28,6 +28,7 @@ const tokenAgencia = firmarToken({
   nombre: 'Bruno',
   agenciaId: 'ag-1',
 })
+const tokenCliente = firmarToken({ sub: 'cuenta-3', rol: 'cliente', nombre: 'Clara' })
 
 const datosHotel = {
   nombre: 'Hotel Central',
@@ -146,5 +147,15 @@ describe('GET /api/hoteles/:id', () => {
 
     expect(respuesta.status).toBe(200)
     expect(respuesta.body).toMatchObject(hotelCreado)
+  })
+
+  it('responde 401 y no crea el hotel con un token de cliente', async () => { 
+    const respuesta = await request(crearApp())
+      .post('/api/hoteles')
+      .set('Authorization', `Bearer ${tokenCliente}`) 
+      .send(datosHotel)
+
+    expect(respuesta.status).toBe(401) 
+    expect(registrar).not.toHaveBeenCalled() 
   })
 })
