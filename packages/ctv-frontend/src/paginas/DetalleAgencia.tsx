@@ -70,7 +70,7 @@ export default function DetalleAgencia() {
               Esta agencia todavía no tiene vuelos ni paquetes.
             </p>
             <Button asChild variant="outline">
-              <Link to="/admin">Crear otra agencia</Link>
+              <Link to="/admin">Volver</Link>
             </Button>
           </CardContent>
         </Card>

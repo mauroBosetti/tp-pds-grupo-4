@@ -327,6 +327,45 @@ export default function AdminDashboard() {
       {/* SECCIÓN 2: USUARIOS Y AGENCIAS */}
       {seccionActiva === 'usuarios' && (
         <div className="grid gap-6 lg:grid-cols-2">
+          
+          {/* Agencias */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Agencias Registradas ({agencias.length})</CardTitle>
+                <CardDescription>Agencias autorizadas para publicar paquetes.</CardDescription>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navegar('/admin/agencias/nueva')}>
+                <PlusCircle className="size-3.5 mr-1" />
+                Nueva
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {agencias.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay agencias registradas.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b text-xs text-muted-foreground uppercase">
+                        <th className="py-2">Nombre</th>
+                        <th className="py-2">Código de Grupo</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {agencias.map((a) => (
+                        <tr key={a.id} className="hover:bg-muted/40">
+                          <td className="py-2.5 font-medium">{a.nombre}</td>
+                          <td className="py-2.5 font-mono text-xs">{a.codigoDeGrupo ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Usuarios */}
           <Card>
             <CardHeader>
@@ -375,43 +414,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* Agencias */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Agencias Registradas ({agencias.length})</CardTitle>
-                <CardDescription>Agencias autorizadas para publicar paquetes.</CardDescription>
-              </div>
-              <Button size="sm" variant="outline" onClick={() => navegar('/admin/agencias/nueva')}>
-                <PlusCircle className="size-3.5 mr-1" />
-                Nueva
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {agencias.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No hay agencias registradas.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b text-xs text-muted-foreground uppercase">
-                        <th className="py-2">Nombre</th>
-                        <th className="py-2">Código de Grupo</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {agencias.map((a) => (
-                        <tr key={a.id} className="hover:bg-muted/40">
-                          <td className="py-2.5 font-medium">{a.nombre}</td>
-                          <td className="py-2.5 font-mono text-xs">{a.codigoDeGrupo ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       )}
 
