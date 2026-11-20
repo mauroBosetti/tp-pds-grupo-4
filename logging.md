@@ -43,12 +43,14 @@ Los siguientes eventos son emitidos indistintamente por `ctv-backend` y `api-vue
 | `usuario_registrado` | `info` | `rol`, `usuarioId`, `agenciaId` | Registro exitoso de usuario (`agenciaId` presente si el rol es agencia). |
 | `registro_rechazado` | `warn` | `rol`, `motivo` | Rechazo en la creación de una cuenta de usuario. |
 
-### Agencias y Paquetes Turísticos
+### Agencias, Hoteles y Paquetes Turísticos
 
 | Evento (`msg`) | Nivel | Campos Adicionales | Descripción |
 |---|---|---|---|
 | `agencia_creada` | `info` | `agenciaId` | Registro y alta exitosa de una nueva agencia. |
 | `agencia_rechazada` | `warn` | `motivo` | Rechazo en la creación o solicitud de agencia. |
+| `hotel_creado` | `info` | `hotelId` | Alta exitosa de un nuevo hotel por parte de un administrador. |
+| `hotel_rechazado` | `warn` | `motivo` | Rechazo en la creación de hotel por datos vacíos o inválidos. |
 | `paquete_creado` | `info` | `paqueteId`, `agenciaId` | Alta exitosa de un paquete turístico. |
 | `paquete_rechazado` | `warn` | `agenciaId`, `motivo` | Rechazo durante la validación o creación de paquete. |
 
