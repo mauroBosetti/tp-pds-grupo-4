@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiVuelosNoDisponible, VentaRechazada, venderVuelos } from './clienteVuelos.js'
+import { ejecutarConContexto } from '../logging/contexto.js'
 
 const fetchSimulado = vi.fn()
 vi.stubGlobal('fetch', fetchSimulado)
@@ -49,4 +50,5 @@ describe('venderVuelos', () => {
 
     await expect(venderVuelos([1, 2], 'Clara')).rejects.toBeInstanceOf(ApiVuelosNoDisponible)
   })
+
 })

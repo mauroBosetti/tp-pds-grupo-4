@@ -1,15 +1,18 @@
 import { Router } from 'express'
 import { registrarAgencia, obtenerAgencia, NombreDeAgenciaInvalido } from '../agencias/agenciasServicio.js'
 import { requiereAdministrador } from '../auth/requiereAdministrador.js'
+import { logger } from '../logging/logger.js'
 
 const agencyRouter: Router = Router()
 
 agencyRouter.post('/', requiereAdministrador, async (req, res) => {
   try {
     const agencia = await registrarAgencia(req.body?.nombre)
+    logger.info({ agenciaId: agencia.id }, 'agencia_creada')
     res.status(201).json(agencia)
   } catch (error) {
     if (error instanceof NombreDeAgenciaInvalido) {
+      logger.warn({ motivo: error.constructor.name }, 'agencia_rechazada')
       res.status(400).json({ error: error.message })
       return
     }

@@ -13,6 +13,7 @@ import {
   DatosDePaqueteInvalidos,
   PaqueteInexistente,
 } from './paquetesServicio.js'
+import { logger } from '../logging/logger.js'
 
 const packageRouter: Router = Router()
 
@@ -69,9 +70,11 @@ packageRouter.post('/', requiereAgencia, async (req, res) => {
   }
   try {
     const paquete = await registrarPaquete(req.body, agenciaId)
+    logger.info({ paqueteId: paquete.id, agenciaId }, 'paquete_creado')
     res.status(201).json(paquete)
   } catch (error) {
     if (error instanceof DatosDePaqueteInvalidos) {
+      logger.warn({ agenciaId, motivo: error.constructor.name }, 'paquete_rechazado')
       res.status(400).json({ error: error.message })
       return
     }
@@ -85,15 +88,25 @@ packageRouter.post('/:id/comprar', requiereCliente, async (req, res) => {
     res.status(401).json({ error: 'No autenticado' })
     return
   }
+  const paqueteId = String(req.params.id)
   try {
-    const venta = await comprarPaquete(String(req.params.id), cuentaId)
+    const venta = await comprarPaquete(paqueteId, cuentaId)
     res.status(201).json(venta)
   } catch (error) {
     if (error instanceof PaqueteInexistente || error instanceof ClienteInexistente) {
+      logger.warn({ paqueteId, motivo: error.constructor.name }, 'compra_rechazada')
       res.status(404).json({ error: error.message })
       return
     }
     if (error instanceof VentaRechazada) {
+      logger.warn(
+        { paqueteId,
+          motivo: error.constructor.name, 
+          estadoApiVuelos: error.estado, 
+          detalle: error.message 
+        },
+        'compra_rechazada',
+      )
       res.status(error.estado === 409 ? 409 : 400).json({ error: error.message })
       return
     }

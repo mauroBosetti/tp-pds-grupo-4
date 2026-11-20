@@ -1,5 +1,39 @@
 services:
   
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    container_name: cadvisor
+    privileged: true
+    command:
+      - --docker_only=true
+      - --housekeeping_interval=5s
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.service
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - cadvisor
+    restart: unless-stopped
+
   influxdb:
     image: influxdb:1.8
     container_name: influxdb
@@ -7,6 +41,8 @@ services:
       - INFLUXDB_DB=k6
     ports:
       - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -16,9 +52,40 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
     depends_on:
       - influxdb
       
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    user: root
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./alloy.config:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy/data
+    depends_on:
+      - loki
+    restart: unless-stopped
+
   k6:
     image: grafana/k6:latest
     volumes:
@@ -34,7 +101,7 @@ services:
   sonarqube: 
     image: sonarqube:community 
     ports: 
-      - "9000:9000" 
+      - "9001:9000" 
     environment: 
       - SONAR-ES-BOOTSTRAP-CHECKS-DISABLE=true 
     volumes: 
@@ -99,6 +166,7 @@ services:
       ADMIN3_NOMBRE: "Admin Tres"
       ADMIN3_EMAIL: "admin3@ctv.com"
       ADMIN3_PASSWORD: "admin1234"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     restart: unless-stopped
     depends_on:
       - db-ctv
@@ -122,6 +190,7 @@ services:
     environment:
       DATABASE_URL: postgresql://vuelos:vuelos@db-vuelos:5432/vuelos
       PORT: 4000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     restart: unless-stopped
     depends_on:
       - db-vuelos
@@ -133,3 +202,8 @@ volumes:
   sonarqube-data: 
   sonarqube-logs: 
   sonarqube-extensions:
+  grafana-data:
+  alloy-data:
+  loki-data:
+  influxdb-data:
+  prometheus-data:

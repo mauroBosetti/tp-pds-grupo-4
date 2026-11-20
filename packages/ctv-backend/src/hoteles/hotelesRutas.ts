@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { registrarHotel, obtenerHotel, listarHoteles, DatosDeHotelInvalidos } from '../hoteles/hotelesServicio.js'
 import { requiereAdministrador } from '../auth/requiereAdministrador.js'
 import { requiereUsuario } from '../auth/requiereUsuario.js'
+import { logger } from '../logging/logger.js'
 
 const hotelesRouter: Router = Router()
 
@@ -13,9 +14,11 @@ hotelesRouter.get('/', requiereUsuario, async (_req, res) => {
 hotelesRouter.post('/', requiereAdministrador, async (req, res) => {
   try {
     const hotel = await registrarHotel(req.body)
+    logger.info({ hotelId: hotel.id }, 'hotel_creado')
     res.status(201).json(hotel)
   } catch (error) {
     if (error instanceof DatosDeHotelInvalidos) {
+      logger.warn({ motivo: error.constructor.name }, 'hotel_rechazado')
       res.status(400).json({ error: error.message })
       return
     }

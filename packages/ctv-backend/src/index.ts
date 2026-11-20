@@ -11,10 +11,14 @@ import {packageRouter} from "./paquetes/paquetesRutas.js";
 import {reportRouter} from "./reportes/reportesRutas.js";
 import {opinionesRouter} from "./opiniones/opinionesRutas.js";
 import {userRouter} from "./usuarios/usuariosRutas.js";
+import {logger} from "./logging/logger.js";
+import { contextoDePeticion, registrarPeticiones, manejarErrores } from './logging/middleware.js'
 
 const app = express()
 const port = Number(process.env.PORT) || 3000
 
+app.use(contextoDePeticion)
+app.use(registrarPeticiones)
 app.use(cors())
 app.use(express.json())
 
@@ -34,6 +38,17 @@ app.get('/hola', (_req, res) => {
   res.send('Hola')
 })
 
+app.use(manejarErrores)
+
+process.on('unhandledRejection', (razon) => {
+  logger.fatal({ err: razon }, 'promesa_rechazada_sin_manejar')
+  process.exit(1)
+})
+process.on('uncaughtException', (error) => {
+  logger.fatal({ err: error }, 'excepcion_sin_capturar')
+  process.exit(1)
+})
+
 app.listen(port, () => {
-  console.log(`ctv-backend listening on port ${port}`)
+  logger.info({ puerto: port }, 'servidor_iniciado')
 })
