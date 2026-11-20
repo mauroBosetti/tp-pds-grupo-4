@@ -33,8 +33,10 @@ const compra: apiCompras.Compra = {
     destino: 'Madrid',
     vueloIdaId: 1,
     vueloVueltaId: 2,
+    hotelId: 'hotel-1',
     agenciaId: 'ag-1',
     agencia: { id: 'ag-1', nombre: 'Turismo Sur' },
+    hotel: { id: 'hotel-1', nombre: 'Hotel Plaza', direccion: 'Gran Vía 1', pais: 'España', ciudad: 'Madrid', imagen: 'https://ejemplo.com/hotel.jpg' },
   },
 }
 

@@ -35,6 +35,7 @@ export interface DatosPaquete {
   destino: unknown
   vueloIdaId: unknown
   vueloVueltaId: unknown
+  hotelId: unknown
 }
 
 function esTextoVacio(valor: unknown): boolean {
@@ -50,10 +51,10 @@ function esIdentificadorDeVuelo(valor: unknown): boolean {
 }
 
 export async function registrarPaquete(datos: DatosPaquete, agenciaId: string) {
-  const { nombre, precio, origen, destino, vueloIdaId, vueloVueltaId } = datos
+  const { nombre, precio, origen, destino, vueloIdaId, vueloVueltaId, hotelId } = datos
   const hayCamposDeTextoVacios = [nombre, origen, destino].some(esTextoVacio)
   const hayVuelosInvalidos = ![vueloIdaId, vueloVueltaId].every(esIdentificadorDeVuelo)
-  if (hayCamposDeTextoVacios || !esEnteroPositivo(precio) || hayVuelosInvalidos) {
+  if (hayCamposDeTextoVacios || !esEnteroPositivo(precio) || hayVuelosInvalidos || esTextoVacio(hotelId)) {
     throw new DatosDePaqueteInvalidos()
   }
   return crearPaquete({
@@ -64,6 +65,7 @@ export async function registrarPaquete(datos: DatosPaquete, agenciaId: string) {
     vueloIdaId: vueloIdaId as number,
     vueloVueltaId: vueloVueltaId as number,
     agenciaId,
+    hotelId: hotelId as string,
   })
 }
 
