@@ -17,6 +17,22 @@ export function buscarComprasDeCliente(usuarioClienteId: string) {
   })
 }
 
+export function buscarTodasLasCompras() {
+  return cliente.compra.findMany({
+    orderBy: { fecha: 'desc' },
+    include: {
+      usuarioCliente: {
+        include: { cuenta: { select: { email: true } } },
+      },
+      paquete: {
+        include: {
+          agencia: { select: { id: true, nombre: true } }
+        },
+      },
+    },
+  })
+}
+
 export async function clienteComproPaquete(usuarioClienteId: string, paqueteId: string) {
   const cantidad = await cliente.compra.count({ where: { usuarioClienteId, paqueteId } })
   return cantidad > 0

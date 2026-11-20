@@ -61,12 +61,9 @@ export default function CrearAgencia() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => {
-                cerrarSesion()
-                navegar('/admin/login')
-              }}
+              onClick={() => navegar('/admin')}
             >
-              Cerrar sesión
+              Volver al panel
             </Button>
           </form>
         </CardContent>

@@ -1,4 +1,4 @@
-import { crearAgencia, buscarAgenciaPorId } from './agenciasRepositorio.js'
+import { crearAgencia, buscarAgenciaPorId, buscarTodasLasAgencias } from './agenciasRepositorio.js'
 
 export class NombreDeAgenciaInvalido extends Error {
   constructor() {
@@ -19,4 +19,8 @@ export function registrarAgencia(nombre: unknown) {
 
 export function obtenerAgencia(id: string) {
   return buscarAgenciaPorId(id)
+}
+
+export function obtenerTodasLasAgencias() {
+  return buscarTodasLasAgencias()
 }

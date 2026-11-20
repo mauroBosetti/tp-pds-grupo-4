@@ -4,6 +4,7 @@ import { AuthUsuarioProvider } from './auth/AuthUsuarioContext'
 import RutaAdministrador from './auth/RutaAdministrador'
 import RutaUsuario from './auth/RutaUsuario'
 import LayoutUsuario from './auth/LayoutUsuario'
+import LayoutAdministrador from './auth/LayoutAdministrador'
 import LoginAdministrador from './paginas/LoginAdministrador'
 import LoginUsuario from './paginas/LoginUsuario'
 import Catalogo from './paginas/Catalogo'
@@ -14,6 +15,7 @@ import CrearPaquete from './paginas/CrearPaquete'
 import CrearAgencia from './paginas/CrearAgencia'
 import CrearHotel from './paginas/CrearHotel'
 import DetalleAgencia from './paginas/DetalleAgencia'
+import AdminDashboard from './paginas/AdminDashboard'
 
 export default function App() {
   return (
@@ -24,8 +26,12 @@ export default function App() {
             <Route path="/" element={<Navigate to="/admin" replace />} />
             <Route path="/admin/login" element={<LoginAdministrador />} />
             <Route element={<RutaAdministrador />}>
-              <Route path="/admin" element={<CrearAgencia />} />
-              <Route path="/admin/hoteles/nuevo" element={<CrearHotel />} />
+              <Route element={<LayoutAdministrador />}>
+                <Route path="/admin" element={ null } />
+                <Route path="/admin/consultas" element={<AdminDashboard />} />
+                <Route path="/admin/agencias/nueva" element={<CrearAgencia />} />
+                <Route path="/admin/hoteles/nuevo" element={<CrearHotel />} />
+              </Route>
             </Route>
             <Route path="/login" element={<LoginUsuario />} />
             <Route path="/registro" element={<Navigate to="/login?modo=registro" replace />} />
