@@ -61,6 +61,7 @@ const paqueteValido = {
   destino: 'Madrid',
   vueloIdaId: 1,
   vueloVueltaId: 2,
+  hotelId: 'hotel-1',
 }
 
 describe('POST /api/package', () => {

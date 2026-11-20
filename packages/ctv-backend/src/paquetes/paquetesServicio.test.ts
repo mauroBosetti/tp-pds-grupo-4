@@ -49,6 +49,7 @@ const datosValidos = {
   destino: 'Madrid',
   vueloIdaId: 1,
   vueloVueltaId: 2,
+  hotelId: 'hotel-1',
 }
 
 describe('registrarPaquete', () => {
@@ -78,8 +79,15 @@ describe('registrarPaquete', () => {
     expect(crearPaquete).not.toHaveBeenCalled()
   })
 
+  it('falla cuando el hotelId está vacío', async () => {
+    await expect(
+      registrarPaquete({ ...datosValidos, hotelId: '' }, agenciaId),
+    ).rejects.toBeInstanceOf(DatosDePaqueteInvalidos)
+    expect(crearPaquete).not.toHaveBeenCalled()
+  })
+
   it('crea el paquete asociándolo a la agencia del usuario', async () => {
-    crearPaquete.mockResolvedValue({ id: 'p-1', ...datosValidos, agenciaId })
+    crearPaquete.mockResolvedValue({ id: 'p-1', ...datosValidos, agenciaId, hotelId: 'hotel-1' })
 
     await registrarPaquete(datosValidos, agenciaId)
 
@@ -88,6 +96,7 @@ describe('registrarPaquete', () => {
     expect(argumentos.data.vueloIdaId).toBe(1)
     expect(argumentos.data.vueloVueltaId).toBe(2)
     expect(argumentos.data.agencia).toEqual({ connect: { id: agenciaId } })
+    expect(argumentos.data.hotel).toEqual({ connect: { id: 'hotel-1' } })
   })
 })
 
@@ -108,7 +117,10 @@ describe('obtenerCatalogoDePaquetes', () => {
     expect(catalogo).toHaveLength(1)
     expect(catalogo[0].agencia).toEqual({ id: agenciaId, nombre: 'Turismo Sur' })
     expect(buscarPaquetes).toHaveBeenCalledWith({
-      include: { agencia: { select: { id: true, nombre: true } } },
+      include: {
+        agencia: { select: { id: true, nombre: true } },
+        hotel: { select: { id: true, nombre: true, direccion: true, pais: true, ciudad: true, imagen: true } },
+      },
     })
   })
 })

@@ -13,6 +13,7 @@ import MisCompras from './paginas/MisCompras'
 import AgenciaHome from './paginas/AgenciaHome'
 import CrearPaquete from './paginas/CrearPaquete'
 import CrearAgencia from './paginas/CrearAgencia'
+import CrearHotel from './paginas/CrearHotel'
 import DetalleAgencia from './paginas/DetalleAgencia'
 import AdminDashboard from './paginas/AdminDashboard'
 
@@ -28,6 +29,7 @@ export default function App() {
               <Route element={<LayoutAdministrador />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/agencias/nueva" element={<CrearAgencia />} />
+                <Route path="/admin/hoteles/nuevo" element={<CrearHotel />} />
               </Route>
             </Route>
             <Route path="/login" element={<LoginUsuario />} />

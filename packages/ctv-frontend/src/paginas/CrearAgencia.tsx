@@ -55,6 +55,9 @@ export default function CrearAgencia() {
             <Button type="submit" disabled={enviando || nombre.trim() === ''}>
               {enviando ? 'Creando...' : 'Crear'}
             </Button>
+            <Button type="button" variant="outline" onClick={() => navegar('/admin/hoteles/nuevo')}>
+              Crear hotel
+            </Button>
             <Button
               type="button"
               variant="ghost"
