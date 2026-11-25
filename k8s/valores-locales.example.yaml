@@ -4,6 +4,7 @@ secretos:
   claveJwt: "un-secreto-largo"
   passwordPostgresCtv: "ctv-password"
   passwordPostgresVuelos: "vuelos-password"
+  passwordGrafana: "admin"
 
 administradores:
   - nombre: "Admin Uno"

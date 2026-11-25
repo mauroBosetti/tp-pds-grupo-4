@@ -1,0 +1,51 @@
+{{- if .Values.observabilidad.habilitada }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.observabilidad.loki.almacenamiento }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      securityContext:
+        fsGroup: 10001
+      containers:
+        - name: loki
+          image: {{ .Values.observabilidad.loki.imagen }}
+          ports:
+            - containerPort: 3100
+          volumeMounts:
+            - name: datos
+              mountPath: /loki
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: loki-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki
+spec:
+  selector:
+    app: loki
+  ports:
+    - port: 3100
+      targetPort: 3100
+{{- end }}

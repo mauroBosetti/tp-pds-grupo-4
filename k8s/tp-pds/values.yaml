@@ -35,6 +35,7 @@ secretos:
   claveJwt: cambiar-en-produccion
   passwordPostgresCtv: cambiar-en-produccion
   passwordPostgresVuelos: cambiar-en-produccion
+  passwordGrafana: cambiar-en-produccion
 
 administradores:
   - nombre: "Admin Uno"
@@ -46,3 +47,49 @@ administradores:
   - nombre: "Admin Tres"
     email: "admin3@ctv.com"
     password: "cambiar-en-produccion"
+
+observabilidad:
+  habilitada: true
+  ingress:
+    dominios:
+      grafana: grafana.localhost
+      prometheus: prometheus.localhost
+      sonarqube: sonarqube.localhost
+    servicios:
+      grafana: 3000
+      prometheus: 9090
+      sonarqube: 9000
+  prometheus:
+    imagen: prom/prometheus:latest
+    almacenamiento: 2Gi
+  alloy:
+    imagen: grafana/alloy:latest
+  loki:
+    imagen: grafana/loki:latest
+    almacenamiento: 2Gi
+  influxdb:
+    imagen: influxdb:1.8
+    almacenamiento: 1Gi
+  grafana:
+    imagen: grafana/grafana-oss:latest
+    usuario: admin
+    almacenamiento: 1Gi
+  sonarqube:
+    imagen: sonarqube:community
+    almacenamiento: 2Gi
+  k6:
+    habilitado: false
+    imagen: grafana/k6:latest
+    escenario: smoke
+    scripts:
+      - load.js
+      - smoke.js
+      - stress.js
+      - sobreventa.js
+      - sobreventa-vuelos.js
+      - lib/clientes.js
+      - lib/config.js
+      - lib/entorno.js
+      - lib/flujos.js
+      - lib/http.js
+      - lib/sobreventa.js

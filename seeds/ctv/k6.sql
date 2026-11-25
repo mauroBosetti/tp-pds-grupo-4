@@ -1,6 +1,6 @@
 -- Datos para pruebas de carga (k6) en la base de ctv-backend.
 -- Se ejecuta DESPUÉS de k6-limpiar.sql (seed.sh cargar hace ambas cosas).
--- Los ids fijos deben coincidir con k6/lib/config.js.
+-- Los ids fijos deben coincidir con k8s/tp-pds/files/k6/lib/config.js.
 BEGIN;
 
 INSERT INTO agencia (id, nombre, codigo_de_grupo)
