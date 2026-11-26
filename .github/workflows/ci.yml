@@ -68,7 +68,7 @@ jobs:
       - name: Correr tests BDD con Cucumber
         env:
           TEST_DATABASE_URL: postgresql://vuelos_test:vuelos_test@localhost:5432/vuelos_test
-        run: npm run test -w api-vuelos
+        run: npm run test:cucumber -w api-vuelos
 
   frontend:
     name: Frontend (Vitest, Build & Playwright)

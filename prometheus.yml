@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 5s        # cada cuánto lee las métricas (corto para ver los tests de estrés casi en vivo)
+  evaluation_interval: 15s   # cada cuánto evalúa reglas (por ahora no hay)
+
+scrape_configs:
+  - job_name: prometheus     # Prometheus se mide a sí mismo
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  - job_name: cadvisor       # CPU, memoria y red de cada contenedor
+    static_configs:
+      - targets: ["cadvisor:8080"]   # nombre del servicio del compose: misma red de Docker

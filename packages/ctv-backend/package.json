@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:pretty": "tsx watch src/index.ts | pino-pretty",
     "build": "prisma generate && tsc",
     "migrate": "prisma migrate dev",
     "reset": "prisma migrate reset",
@@ -29,6 +30,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.23.0",
+    "pino": "^10.4.0",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
   },
@@ -42,15 +44,16 @@
     "@types/supertest": "^7.2.1",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/yamljs": "^0.2.34",
+    "@vitest/coverage-v8": "^4.1.11",
+    "pino-pretty": "^13.2.0",
     "prisma": "^7.10.0",
     "prisma-erd-generator": "^3.2.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11",
-    "@vitest/coverage-v8": "^4.1.11"
+    "vitest": "^4.1.11"
   },
-    "optionalDependencies": { 
-      "@rollup/rollup-win32-x64-msvc": "^4.64.12" 
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.64.12"
   }
 }

@@ -3,10 +3,11 @@
 ## run full project
 
 ### W/ Docker Compose
+```
    * docker compose up
    * http://localhost:8080/admin
    * http://localhost:8080/login
-
+```
 ### imagenes docker
    * grafana
    * influxdb
@@ -14,6 +15,30 @@
    * api-vuelos
    * ctv-backend
    * ctv-frontend
+   * k6
+   * loki
+   * prometheus
+   * cAdvisor
+   * alloy
+
+## Logs
+```docker compose logs -f --no-log-prefix ctv-backend api-vuelos | npx pino-pretty```
+### LOG_LEVEL
+* **info** : Eventos normales: compra registrada, login exitoso, petición terminada con 2xx
+* **warn** : Algo rechazado o inesperado, pero el sistema funciona: venta rechazada por falta de  cupo, login fallido, respuestas 4xx
+* **error** : Fallas del sistema: errores 5xx, api-vuelos inaccesible, compra inconsistente
+* **fatal** : El proceso no puede seguir y se cierra
+* **silence** : No escribe nada
+### Loki + Grafana
+* http://localhost:3001  admin:admin > skip
+> configuracion db y dashboard en compose.
+* Data sources > Loki > explore > label filter > app > ctv-backend | api-vuelos > Run query
+* loki-dashboard.json con paneles de "Errores y advertencias" y Trazabilidad: todos los logs (filtrar con la variable requestId) entre otros.
+
+## Prometheus + cAdvisor
+* prometheus http://localhost:9090
+* http://localhost:3001  admin:admin > skip
+> configuracion db y dashboard en compose.
 
 ## K6
    * npm run dev
@@ -28,11 +53,13 @@
    * npm run seed:k6:clean
 
    > se recomienda:
+   > * LOG_LEVEL=error docker compose up -d
    > * docker compose down sonarqube
    ### influx + graphana
 
    * http://localhost:3001
-   * admin | admin
+   * admin | admin > skip
+   > configuracion db y dashboard en compose.
    * Connections > Add new > (search) InfluxDB (Data Sources) > Add new data source
    
    #### configuracion de plugin
@@ -43,7 +70,7 @@
    * Dashboards > View as list 
    * Dashboards > New > Import
    * Upload dashboard JSON file | Import via dashboard JSON model 
-      * .\k6\dashboard-influx.json > Load
+      * .\dashboards\dashboard-influx.json > Load
       * DS_INFLUXDB (seleccionar) > Import
 
    ### parametros bash
@@ -58,7 +85,7 @@
 ```
 docker compose up sonarqube
 ```
-* http://localhost:9000/
+* http://localhost:9001/
 * usr and pass: admin admin
 * projects -> create local project
 * project display name: tp-pds-grupo-4

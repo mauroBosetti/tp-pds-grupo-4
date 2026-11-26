@@ -2,6 +2,14 @@ import express, {json} from "express";
 import cors from "cors";
 import {setParams} from './utils.js'
 import {registrarVenta, VentaError} from "./ventas.js";
+import {logger} from './logging/logger.js'
+import {contextoDePeticion, registrarPeticiones, manejarErrores} from './logging/middlewares.js'
+
+const MOTIVOS_DE_RECHAZO = {
+    400: "PedidoInvalido",
+    404: "VueloInexistente",
+    409: "VueloSinDisponibilidad",
+};
 
 /**
  * Crea la app de Express recibiendo el pool por parámetro (inyección de dependencia).
@@ -11,6 +19,8 @@ import {registrarVenta, VentaError} from "./ventas.js";
 export function createApp(pool) {
     const app = express();
 
+    app.use(contextoDePeticion);
+    app.use(registrarPeticiones);
     app.use(cors());
     app.use(json());
 
@@ -37,7 +47,7 @@ export function createApp(pool) {
 
             res.json(vuelos);
         } catch (err) {
-            console.error(err);
+            logger.error({err}, "error_consultando_vuelos");
             res.status(500).json({error: "Error consultando vuelos"});
         }
     });
@@ -53,15 +63,25 @@ export function createApp(pool) {
 
         try {
             const venta = await registrarVenta(pool, ids_vuelo, pasajero);
+            logger.info({idVenta: venta.id_venta, idsVuelo: venta.ids_vuelo}, "venta_registrada");
             res.json(venta);
         } catch (err) {
             if (err instanceof VentaError) {
+                logger.warn(
+                    {
+                        status: err.status,
+                        motivo: MOTIVOS_DE_RECHAZO[err.status] ?? "Desconocido",
+                        detalle: err.message,
+                    }, 
+                    "venta_rechazada"
+                );
                 return res.status(err.status).json({error: err.message});
             }
-            console.error(err);
+            logger.error({err}, "error_registrando_venta");
             res.status(500).json({error: "Error registrando la venta"});
         }
     });
 
+    app.use(manejarErrores);
     return app;
 }
