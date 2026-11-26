@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrar-ctv
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrar-ctv
+          image: "{{ .Values.ctvBackend.imagen.repositorio }}:{{ .Values.ctvBackend.imagen.tag }}"
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secretos
+                  key: DATABASE_URL_CTV
+            {{- range $indice, $administrador := .Values.administradores }}
+            - name: ADMIN{{ add1 $indice }}_NOMBRE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-secretos
+                  key: ADMIN{{ add1 $indice }}_NOMBRE
+            - name: ADMIN{{ add1 $indice }}_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-secretos
+                  key: ADMIN{{ add1 $indice }}_EMAIL
+            - name: ADMIN{{ add1 $indice }}_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-secretos
+                  key: ADMIN{{ add1 $indice }}_PASSWORD
+            {{- end }}

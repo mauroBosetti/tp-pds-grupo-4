@@ -1,0 +1,52 @@
+{{- if .Values.observabilidad.habilitada }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.observabilidad.influxdb.almacenamiento }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+        - name: influxdb
+          image: {{ .Values.observabilidad.influxdb.imagen }}
+          env:
+            - name: INFLUXDB_DB
+              value: k6
+          ports:
+            - containerPort: 8086
+          volumeMounts:
+            - name: datos
+              mountPath: /var/lib/influxdb
+      volumes:
+        - name: datos
+          persistentVolumeClaim:
+            claimName: influxdb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+spec:
+  selector:
+    app: influxdb
+  ports:
+    - port: 8086
+      targetPort: 8086
+{{- end }}

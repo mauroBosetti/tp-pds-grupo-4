@@ -107,6 +107,29 @@ jobs:
           path: packages/ctv-frontend/playwright-report/
           retention-days: 7
   
+  chart-helm:
+    name: Chart de Helm (lint y manifiestos)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v4.3.2
+
+      - name: Instalar kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz \
+            | sudo tar -xz -C /usr/local/bin kubeconform
+
+      - name: Lint del chart
+        run: helm lint k8s/tp-pds
+
+      - name: Validar manifiestos renderizados
+        run: helm template tp-pds k8s/tp-pds | kubeconform -strict -summary -kubernetes-version 1.31.0
+
   sonar:
     name: Sonar Analysis (Temporal)
     runs-on: ubuntu-latest

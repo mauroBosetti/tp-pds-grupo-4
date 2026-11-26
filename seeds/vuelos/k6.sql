@@ -1,5 +1,5 @@
 -- Vuelos para pruebas de carga (k6). Ids fijos 9001-9004 para no chocar con los vuelos reales.
--- Los valores deben coincidir con k6/lib/config.js.
+-- Los valores deben coincidir con k8s/tp-pds/files/k6/lib/config.js.
 --   9001/9002: ruta de carga, capacidad enorme (nunca se agota)
 --   9003/9004: ruta de sobreventa; ida con 30 asientos, vuelta con 1000
 BEGIN;

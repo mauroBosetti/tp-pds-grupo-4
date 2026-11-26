@@ -8,6 +8,31 @@
    * http://localhost:8080/admin
    * http://localhost:8080/login
 ```
+
+### W/ Kubernetes (kind + Helm)
+   * requisitos: docker, kubectl, kind y helm (`brew install kind helm`)
+   * docker build -t ctv-backend:dev packages/ctv-backend
+   * docker build -t api-vuelos:dev packages/api-vuelos
+   * docker build -t ctv-frontend:dev packages/ctv-frontend
+   * kind create cluster --name tp-pds --config k8s/kind-config.yaml
+   * kind load docker-image ctv-backend:dev api-vuelos:dev ctv-frontend:dev --name tp-pds
+   * kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+   * kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=240s
+   * cp k8s/valores-locales.example.yaml k8s/valores-locales.yaml (completar las contraseñas; el archivo no se versiona)
+   * helm install tp-pds k8s/tp-pds -n tp-pds --create-namespace -f k8s/valores-locales.yaml --wait
+   * http://localhost:8081/login
+
+   Para aplicar cambios: `helm upgrade tp-pds k8s/tp-pds -n tp-pds -f k8s/valores-locales.yaml`.
+   Para borrar el cluster: `kind delete cluster --name tp-pds`.
+
+   Los dashboards, datasources de Grafana y scripts de k6 viven en `k8s/tp-pds/files/`: los usan tanto docker compose como el chart, así que se editan ahí.
+   Observabilidad (se despliega junto con la app; `observabilidad.habilitada=false` para omitirla). Las UIs se exponen por el ingress con host propio (`*.localhost` resuelve a 127.0.0.1, no hace falta tocar `/etc/hosts`):
+   * grafana: http://grafana.localhost:8081 (admin / valor de `passwordGrafana`)
+   * prometheus: http://prometheus.localhost:8081
+   * sonarqube: http://sonarqube.localhost:8081
+   * loki e influxdb no tienen UI propia (se consultan desde Grafana); si hace falta su API: `kubectl port-forward -n tp-pds svc/loki 3100:3100` o `svc/influxdb 8086:8086`.
+   * k6 (carga bajo demanda): `helm upgrade tp-pds k8s/tp-pds -n tp-pds -f k8s/valores-locales.yaml --set observabilidad.k6.habilitado=true --set observabilidad.k6.escenario=smoke`
+
 ### imagenes docker
    * grafana
    * influxdb

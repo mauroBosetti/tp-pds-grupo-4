@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tp-pds
+spec:
+  ingressClassName: {{ .Values.ingress.claseIngress }}
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ctv-frontend
+                port:
+                  number: {{ .Values.ctvFrontend.puerto }}
+{{- if .Values.observabilidad.habilitada }}
+{{- range $servicio, $puerto := .Values.observabilidad.ingress.servicios }}
+    - host: {{ index $.Values.observabilidad.ingress.dominios $servicio | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $servicio }}
+                port:
+                  number: {{ $puerto }}
+{{- end }}
+{{- end }}

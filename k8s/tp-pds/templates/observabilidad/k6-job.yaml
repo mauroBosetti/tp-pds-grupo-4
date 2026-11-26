@@ -1,0 +1,39 @@
+{{- if and .Values.observabilidad.habilitada .Values.observabilidad.k6.habilitado }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: {{ .Values.observabilidad.k6.imagen }}
+          workingDir: /k6
+          command:
+            - k6
+            - run
+            - --out
+            - influxdb=http://influxdb:8086/k6
+            - --summary-export=/tmp/{{ .Values.observabilidad.k6.escenario }}-resumen.json
+            - {{ printf "%s.js" .Values.observabilidad.k6.escenario | quote }}
+          env:
+            - name: BASE_URL
+              value: "http://ctv-backend:{{ .Values.ctvBackend.puerto }}"
+            - name: VUELOS_URL
+              value: "http://api-vuelos:{{ .Values.apiVuelos.puerto }}"
+          volumeMounts:
+            - name: scripts
+              mountPath: /k6
+      volumes:
+        - name: scripts
+          configMap:
+            name: k6-scripts
+            items:
+              {{- range $ruta := .Values.observabilidad.k6.scripts }}
+              - key: {{ $ruta | replace "/" "__" | quote }}
+                path: {{ $ruta | quote }}
+              {{- end }}
+{{- end }}

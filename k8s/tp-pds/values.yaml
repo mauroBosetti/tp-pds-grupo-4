@@ -1,0 +1,95 @@
+# Valores por defecto. Las contraseñas reales NO van acá: se pasan con un archivo
+# propio (ver k8s/valores-locales.example.yaml) o con --set.
+
+ctvBackend:
+  imagen:
+    repositorio: ctv-backend
+    tag: dev
+  puerto: 3000
+
+ctvFrontend:
+  imagen:
+    repositorio: ctv-frontend
+    tag: dev
+  puerto: 80
+
+apiVuelos:
+  imagen:
+    repositorio: api-vuelos
+    tag: dev
+  puerto: 4000
+
+postgres:
+  imagen: postgres:16-alpine
+  almacenamiento: 1Gi
+  bases:
+    ctv:
+      usuario: ctv
+    vuelos:
+      usuario: vuelos
+
+ingress:
+  claseIngress: nginx
+
+secretos:
+  claveJwt: cambiar-en-produccion
+  passwordPostgresCtv: cambiar-en-produccion
+  passwordPostgresVuelos: cambiar-en-produccion
+  passwordGrafana: cambiar-en-produccion
+
+administradores:
+  - nombre: "Admin Uno"
+    email: "admin1@ctv.com"
+    password: "cambiar-en-produccion"
+  - nombre: "Admin Dos"
+    email: "admin2@ctv.com"
+    password: "cambiar-en-produccion"
+  - nombre: "Admin Tres"
+    email: "admin3@ctv.com"
+    password: "cambiar-en-produccion"
+
+observabilidad:
+  habilitada: true
+  ingress:
+    dominios:
+      grafana: grafana.localhost
+      prometheus: prometheus.localhost
+      sonarqube: sonarqube.localhost
+    servicios:
+      grafana: 3000
+      prometheus: 9090
+      sonarqube: 9000
+  prometheus:
+    imagen: prom/prometheus:latest
+    almacenamiento: 2Gi
+  alloy:
+    imagen: grafana/alloy:latest
+  loki:
+    imagen: grafana/loki:latest
+    almacenamiento: 2Gi
+  influxdb:
+    imagen: influxdb:1.8
+    almacenamiento: 1Gi
+  grafana:
+    imagen: grafana/grafana-oss:latest
+    usuario: admin
+    almacenamiento: 1Gi
+  sonarqube:
+    imagen: sonarqube:community
+    almacenamiento: 2Gi
+  k6:
+    habilitado: false
+    imagen: grafana/k6:latest
+    escenario: smoke
+    scripts:
+      - load.js
+      - smoke.js
+      - stress.js
+      - sobreventa.js
+      - sobreventa-vuelos.js
+      - lib/clientes.js
+      - lib/config.js
+      - lib/entorno.js
+      - lib/flujos.js
+      - lib/http.js
+      - lib/sobreventa.js
