@@ -3,15 +3,20 @@ import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { firmarToken } from '../auth/token.js'
 import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
-import { obtenerComprasDelCliente } from './comprasServicio.js'
+import { obtenerComprasDelCliente, obtenerTodasLasCompras } from './comprasServicio.js'
 import { comprasRouter } from './comprasRutas.js'
 
 vi.mock('./comprasServicio.js', async (importarReal) => {
   const real = await importarReal<typeof import('./comprasServicio.js')>()
-  return { ...real, obtenerComprasDelCliente: vi.fn() }
+  return {
+    ...real,
+    obtenerComprasDelCliente: vi.fn(),
+    obtenerTodasLasCompras: vi.fn(),
+  }
 })
 
 const obtenerCompras = vi.mocked(obtenerComprasDelCliente)
+const mockObtenerTodas = vi.mocked(obtenerTodasLasCompras)
 
 function crearApp() {
   const app = express()
@@ -22,6 +27,36 @@ function crearApp() {
 
 const tokenCliente = firmarToken({ sub: 'cuenta-3', rol: 'cliente', nombre: 'Clara' })
 const tokenAgencia = firmarToken({ sub: 'cuenta-1', rol: 'agencia', nombre: 'Bruno', agenciaId: 'ag-1' })
+const tokenAdmin = firmarToken({ sub: 'cuenta-2', rol: 'administrador', nombre: 'Ada' })
+
+describe('GET /api/compras/todas', () => {
+  beforeEach(() => {
+    mockObtenerTodas.mockReset()
+  })
+
+  it('responde 401 sin token', async () => {
+    const respuesta = await request(crearApp()).get('/api/compras/todas')
+    expect(respuesta.status).toBe(401)
+  })
+
+  it('responde 401 si no es administrador', async () => {
+    const respuesta = await request(crearApp())
+      .get('/api/compras/todas')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+    expect(respuesta.status).toBe(401)
+  })
+
+  it('responde 200 con todas las compras para el administrador', async () => {
+    mockObtenerTodas.mockResolvedValue([])
+
+    const respuesta = await request(crearApp())
+      .get('/api/compras/todas')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toEqual([])
+  })
+})
 
 describe('GET /api/compras', () => {
   beforeEach(() => {

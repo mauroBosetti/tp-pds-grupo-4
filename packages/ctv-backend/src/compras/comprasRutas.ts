@@ -1,9 +1,15 @@
 import { Router } from 'express'
 import { requiereCliente } from '../auth/requiereCliente.js'
+import { requiereAdministrador } from '../auth/requiereAdministrador.js'
 import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
-import { obtenerComprasDelCliente } from './comprasServicio.js'
+import { obtenerComprasDelCliente, obtenerTodasLasCompras } from './comprasServicio.js'
 
 const comprasRouter: Router = Router()
+
+comprasRouter.get('/todas', requiereAdministrador, async (_req, res) => {
+  const compras = await obtenerTodasLasCompras()
+  res.json(compras)
+})
 
 comprasRouter.get('/', requiereCliente, async (req, res) => {
   const cuentaId = req.usuario?.sub

@@ -1,7 +1,7 @@
 import { buscarUsuarioClientePorCuentaId } from '../usuariosCliente/usuariosClienteRepositorio.js'
 import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import { buscarOpinionesDeCliente } from '../opiniones/opinionesRepositorio.js'
-import { buscarComprasDeCliente } from './comprasRepositorio.js'
+import { buscarComprasDeCliente, buscarTodasLasCompras } from './comprasRepositorio.js'
 
 export async function obtenerComprasDelCliente(cuentaId: string) {
   const usuarioCliente = await buscarUsuarioClientePorCuentaId(cuentaId)
@@ -19,4 +19,8 @@ export async function obtenerComprasDelCliente(cuentaId: string) {
       opinion: opinion ? { comentario: opinion.comentario, puntaje: opinion.puntaje } : null,
     }
   })
+}
+
+export function obtenerTodasLasCompras() {
+  return buscarTodasLasCompras()
 }

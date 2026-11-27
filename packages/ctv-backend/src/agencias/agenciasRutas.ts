@@ -1,9 +1,19 @@
 import { Router } from 'express'
-import { registrarAgencia, obtenerAgencia, NombreDeAgenciaInvalido } from '../agencias/agenciasServicio.js'
+import {
+  registrarAgencia,
+  obtenerAgencia,
+  obtenerTodasLasAgencias,
+  NombreDeAgenciaInvalido,
+} from '../agencias/agenciasServicio.js'
 import { requiereAdministrador } from '../auth/requiereAdministrador.js'
 import { logger } from '../logging/logger.js'
 
 const agencyRouter: Router = Router()
+
+agencyRouter.get('/', requiereAdministrador, async (_req, res) => {
+  const agencias = await obtenerTodasLasAgencias()
+  res.json(agencias)
+})
 
 agencyRouter.post('/', requiereAdministrador, async (req, res) => {
   try {

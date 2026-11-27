@@ -7,15 +7,24 @@ import {
   DatosDeOpinionInvalidos,
   PaqueteNoComprado,
   opinarSobrePaquete,
+  obtenerPaquetesDeInteres,
+  obtenerTodasLasOpiniones,
 } from './opinionesServicio.js'
 import { opinionesRouter } from './opinionesRutas.js'
 
 vi.mock('./opinionesServicio.js', async (importarReal) => {
   const real = await importarReal<typeof import('./opinionesServicio.js')>()
-  return { ...real, opinarSobrePaquete: vi.fn() }
+  return {
+    ...real,
+    opinarSobrePaquete: vi.fn(),
+    obtenerPaquetesDeInteres: vi.fn(),
+    obtenerTodasLasOpiniones: vi.fn(),
+  }
 })
 
 const opinar = vi.mocked(opinarSobrePaquete)
+const mockObtenerInteres = vi.mocked(obtenerPaquetesDeInteres)
+const mockObtenerOpiniones = vi.mocked(obtenerTodasLasOpiniones)
 
 function crearApp() {
   const app = express()
@@ -26,6 +35,7 @@ function crearApp() {
 
 const tokenCliente = firmarToken({ sub: 'cuenta-3', rol: 'cliente', nombre: 'Clara' })
 const tokenAgencia = firmarToken({ sub: 'cuenta-1', rol: 'agencia', nombre: 'Bruno', agenciaId: 'ag-1' })
+const tokenAdmin = firmarToken({ sub: 'cuenta-2', rol: 'administrador', nombre: 'Ada' })
 const opinionGuardada = {
   usuarioClienteId: 'u-1',
   paqueteId: 'p-1',
@@ -33,6 +43,54 @@ const opinionGuardada = {
   comentario: 'Genial',
   puntaje: 5,
 }
+
+describe('GET /api/review', () => {
+  beforeEach(() => {
+    mockObtenerOpiniones.mockReset()
+  })
+
+  it('responde 401 si no es administrador', async () => {
+    const respuesta = await request(crearApp())
+      .get('/api/review')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+    expect(respuesta.status).toBe(401)
+  })
+
+  it('responde 200 con todas las opiniones para el administrador', async () => {
+    mockObtenerOpiniones.mockResolvedValue([opinionGuardada as any])
+
+    const respuesta = await request(crearApp())
+      .get('/api/review')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toEqual([opinionGuardada])
+  })
+})
+
+describe('GET /api/review/favoritos', () => {
+  beforeEach(() => {
+    mockObtenerInteres.mockReset()
+  })
+
+  it('responde 401 si no es administrador', async () => {
+    const respuesta = await request(crearApp())
+      .get('/api/review/favoritos')
+      .set('Authorization', `Bearer ${tokenCliente}`)
+    expect(respuesta.status).toBe(401)
+  })
+
+  it('responde 200 con los favoritos para el administrador', async () => {
+    mockObtenerInteres.mockResolvedValue([])
+
+    const respuesta = await request(crearApp())
+      .get('/api/review/favoritos')
+      .set('Authorization', `Bearer ${tokenAdmin}`)
+
+    expect(respuesta.status).toBe(200)
+    expect(respuesta.body).toEqual([])
+  })
+})
 
 describe('PUT /api/review/:paqueteId', () => {
   beforeEach(() => {

@@ -1,14 +1,27 @@
 import { Router } from 'express'
 import { requiereCliente } from '../auth/requiereCliente.js'
+import { requiereAdministrador } from '../auth/requiereAdministrador.js'
 import { ClienteInexistente } from '../usuariosCliente/clienteInexistente.js'
 import {
   DatosDeOpinionInvalidos,
   PaqueteNoComprado,
   opinarSobrePaquete,
+  obtenerPaquetesDeInteres,
+  obtenerTodasLasOpiniones,
 } from './opinionesServicio.js'
 import { logger } from '../logging/logger.js'
 
 const opinionesRouter: Router = Router()
+
+opinionesRouter.get('/', requiereAdministrador, async (_req, res) => {
+  const opiniones = await obtenerTodasLasOpiniones()
+  res.json(opiniones)
+})
+
+opinionesRouter.get('/favoritos', requiereAdministrador, async (_req, res) => {
+  const favoritos = await obtenerPaquetesDeInteres()
+  res.json(favoritos)
+})
 
 opinionesRouter.put('/:paqueteId', requiereCliente, async (req, res) => {
   const cuentaId = req.usuario?.sub
